@@ -43,8 +43,8 @@ class SupervoltBatteryGUI(tk.Canvas):
 
     def __init__(self, master=None, mac=None, size=(500, 500),
                   gui="graphic", orientation="vertical",
-                  iconBattery="pic/battery-svgrepo-com.png",
-                  iconLoad="pic/lamp-svgrepo-com.png",
+                  iconBattery="pic_free/battery_pixabay_clone.png",
+                  iconLoad="pic_free/bulb_pixabay_clone.png",
                   showCellVoltage=True,
                   showCapacity=True,
                   disconnectAfterData=False,
@@ -384,7 +384,7 @@ def main():
         frame.pack(side=tk.TOP, fill=tk.X)
     
         mac = "84:28:D7:8F:XX:XX"
-        if sys.argv[1] is not None:
+        if len(sys.argv) > 1 and sys.argv[1]:
             mac = sys.argv[1]
         else:
             logging.warning("usage: supervoltbatterygui.py <BLE-Address>")
@@ -393,8 +393,8 @@ def main():
                                   gui="graphic",
                                   orientation="vertical", size=(240, 320),
                                   # orientation="horizontal", size=(400, 100),
-                                  iconBattery="../pic/battery-svgrepo-com.png",
-                                  iconLoad="../pic/lamp-svgrepo-com.png",
+                                  iconBattery="../pic_free/battery_pixabay_clone.png",
+                                  iconLoad="../pic_free/bulb_pixabay_clone.png",
                                   disconnectAfterData=True,
                                   updatetimeS=5,
                                   verbose=True)

@@ -1,13 +1,57 @@
 # WoMoAtor
-Überwachung und Steuerung eines Wohnmobils mit dem Raspberry PI und Python3.
+Überwachung und Steuerung eines Wohnmobils mit dem Raspberry Pi und Python3.
+
+Das Projekt befindet sich in der Entwicklungsphase. Es können ständig gravierende Änderungen vorgenommen werden.
+
+Die Hauptklasse für die komplette Steuerung ist derzeit noch nicht veröffentlicht. Die einzelnen Module können jedoch auch unabhängig davon verwendet werden. Viele Dateien können auch direkt gestartet werden (main()).
+
+## Module
+Folgende Module existieren:
+* Überwachung der LiFePo3-Batterie von [Supervolt](https://supervolt.de/) ( [Einbaubericht](Einbau_Supervolt.md) )
+* Überwachung der Fahrzeugbatterie mit [BatteryGuard](https://www.battery-guard.net/)
+* Überwachung der Temperaturen mit Bluetooth-LE fähigen Sensoren
+* Reifendrücküberwachung TPMS mit DVB-T-Empfänger
+* GPS
+
 
 Folgende Module sind geplant:
 
-* Überwachung der LiFePo4-Batterie von [Supervolt](https://supervolt.de/) ( [Einbaubericht](Einbau_Supervolt.md) )
-* Überwachung der Fahrzeugbatterie mit [BatteryGuard](https://www.battery-guard.net/)
-* Überwachung der Temperaturen mit Bluetooth-LE fähigen Sensoren (Inkbird TH-1, Mi-Sensor (Runde Version), Brifit, Azarton)
-* Reifendrücküberwachung TPMS mit DVB-T-Empfänger
-* Gassensor (Arduino Nano mit MQ-2)
-* Bewegungsmelder (Arduino Nano mit IR und Radarsensor)
+* Gassensor und  Bewegungsmelder (Arduino Nano mit MQ-2, IR oder Radarsensor)
 
 Im Laufe der Zeit kommen mehr Module hinzu.
+
+## Verwendete Pythonmodule
+Verwendete Python-Module (evtl unvollständig):
+- smopy
+- pynmea2
+- bluepy
+- bleak
+- bleson
+- cairosvg
+- schedule
+- pillow
+- (pyscreenshot)
+- (opencv-contrib-python)
+- (pydbus)
+
+Hier das Kommando zum installieren der benötigten Module:
+(sudo) pip3 install bluepy bleak bleson cairosvg schedule pillow
+(sudo) pip3 install pyscreenshot opencv-contrib-python pydbus
+
+## Konfiguration mit JSON
+Die Konfiguration erfolgt per JSON. Weitere Informationen zur Konfiguration befindet sich im jeweiligen Modul.
+
+	{
+		"system": {
+			"name": "WoMoAtor",
+			"version": "V0.1"
+		},
+		"notification": {
+			"emailToAddresses": "b@b.c",
+			"emailFromAddress": "a@b.c",
+			"emailServer": "smtp.email",
+			"emailPort": 587,
+			"emailPassword": "bubu",
+			"dataURL": "https://wo auch immer"
+		}
+	}

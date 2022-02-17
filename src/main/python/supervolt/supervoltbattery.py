@@ -542,8 +542,10 @@ class SupervoltBattery():
                 json += "\"" + prefixText + "alarm\": {}".format(self.alarm) + ",\n"
             if self.workingState is not None:
                 json += "\"" + prefixText + "workingState\": {}".format(self.workingState) + ",\n"
-                json += "\"" + prefixText + "workingStateText\": \"{}\"".format(self.getWorkingStateText()) + ",\n"
-                json += "\"" + prefixText + "workingStateTextShort\": \"{}\"".format(self.getWorkingStateTextShort()) + ",\n"
+                withoutUmlaute = self.getWorkingStateText().replace("Ü", "Ue").replace("ü", "ue")
+                json += "\"" + prefixText + "workingStateText\": \"{}\"".format(withoutUmlaute) + ",\n"
+                withoutUmlaute = self.getWorkingStateTextShort().replace("Ü", "Ue").replace("ü", "ue")
+                json += "\"" + prefixText + "workingStateTextShort\": \"{}\"".format(withoutUmlaute) + ",\n"
             if self.completeAh is not None:
                 json += "\"" + prefixText + "completeAh\": {}".format(self.completeAh) + ",\n"
             if self.remainingAh is not None:
