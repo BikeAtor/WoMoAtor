@@ -6,8 +6,8 @@ block_cipher = None
 
 a = Analysis(['supervoltbatterygui.py'],
              pathex=[],
-             binaries=[],
-             datas=[],
+             binaries=[('windows-dll/libcairo-2.dll', '.')],
+             datas=[('../pic_free', 'pic_free/')],
              hiddenimports=[],
              hookspath=[],
              hooksconfig={},

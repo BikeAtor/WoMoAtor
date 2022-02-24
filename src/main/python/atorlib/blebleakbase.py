@@ -88,8 +88,11 @@ class BleBleakBase(atorlib.BleBase):
                             if self.verbose:
                                 logging.info("connected: {}".format(self.device.is_connected))
                             if self.mtuSize is not None:
-                                await self.device._acquire_mtu()
-                                logging.warning("bleak does not support MTU-Size: {}".format(self.device.mtu_size))
+                                try:
+                                    await self.device._acquire_mtu()
+                                    logging.warning("bleak does not support MTU-Size: {}".format(self.device.mtu_size))
+                                except:
+                                    logging.error(sys.exc_info())
                             await self.requestOnce()
                     else:
                         with bleak.BleakClient(self.mac, timeout=20.0) as self.device:

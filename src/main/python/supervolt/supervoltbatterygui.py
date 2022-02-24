@@ -4,6 +4,10 @@ import sys
 sys.path.append('..')
 
 import os
+# for pyinstaller
+dllpath = os.path.dirname(os.path.realpath(sys.argv[0]))
+if dllpath not in os.environ:
+    os.environ["PATH"] += os.pathsep + dllpath
 import logging
 import threading
 import time
@@ -21,6 +25,7 @@ except:
 # GUI
 import tkinter as tk
 import tkinter.font as tkFont
+import cairo
 import cairosvg
 import io
 from PIL import Image, ImageTk
@@ -404,12 +409,17 @@ def main():
         else:
             logging.warning("usage: supervoltbatterygui.py <BLE-Address>")
             return
+        pathToIcons = "../pic_free"
+        if not os.path.exists(pathToIcons):
+            pathToIcons = "pic_free"
+            if not os.path.exists(pathToIcons):
+                logging.error("could not find icons")
         app = SupervoltBatteryGUI(master=frame, mac=mac,
                                   gui="graphic",
                                   orientation="vertical", size=(240, 320),
                                   # orientation="horizontal", size=(400, 100),
-                                  iconBattery="../pic_free/battery_pixabay_clone.png",
-                                  iconLoad="../pic_free/bulb_pixabay_clone.png",
+                                  iconBattery=pathToIcons + "/battery_pixabay_clone.png",
+                                  iconLoad=pathToIcons + "/bulb_pixabay_clone.png",
                                   disconnectAfterData=True,
                                   updatetimeS=5,
                                   verbose=True,
