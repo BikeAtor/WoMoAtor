@@ -7,7 +7,7 @@ Die Hauptklasse für die komplette Steuerung ist derzeit noch nicht veröffentli
 
 ## Module
 Folgende Module existieren:
-* Überwachung der LiFePo3-Batterie von [Supervolt](https://supervolt.de/) ( [Einbaubericht](Einbau_Supervolt.md) ) ( Ist auch unter Windows nutzbar )
+* Überwachung der LiFePo3-Batterie von [Supervolt](https://supervolt.de/) ( [Einbaubericht](Einbau_Supervolt.md) ) ( Ist auch unter [Windows](supervolt/README_windows.md) nutzbar )
 * Überwachung der Fahrzeugbatterie mit [BatteryGuard](https://www.battery-guard.net/)
 * Überwachung der Temperaturen mit Bluetooth-LE fähigen Sensoren
 * Reifendrücküberwachung TPMS mit DVB-T-Empfänger
