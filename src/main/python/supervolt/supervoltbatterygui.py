@@ -11,6 +11,9 @@ if dllpath not in os.environ:
 import logging
 import threading
 import time
+
+import json
+
 # import supervolt.supervoltbattery
 try:
     from supervolt import supervoltbatterybluepy
@@ -22,6 +25,7 @@ try:
 except:
     logging.warning("no bleak")
     pass
+from supervolt import supervoltbatterybleak
 # GUI
 import tkinter as tk
 import tkinter.font as tkFont
@@ -32,8 +36,9 @@ from PIL import Image, ImageTk
 
 
 class SupervoltBatteryGUI(tk.Canvas):
-    fontsize = 20
+    fontsize = None
     font = None
+    fontsizeSmall = None
     fontSmall = None
     mac = None
     battery = None
@@ -54,21 +59,25 @@ class SupervoltBatteryGUI(tk.Canvas):
     disconnectAfterData = False
     updatetimeS = 60
     useBleak = False
+    timeout: float = None
 
     def __init__(self, master=None, mac=None, size=(500, 500),
-                  gui="graphic", orientation="vertical",
-                  iconBattery="pic_free/battery_pixabay_clone.png",
-                  iconLoad="pic_free/bulb_pixabay_clone.png",
-                  showCellVoltage=True,
-                  showCapacity=True,
-                  disconnectAfterData=False,
-                  timeout=5, fontsize=20, updatetimeS=10,
-                  font=None, fontSmall=None, bg=None, fg=None,
-                  verbose=False,
-                  useBleak=False):
+                jsonConfig=None,
+                gui="graphic", orientation="vertical",
+                iconBattery="pic_free/battery_pixabay_clone.png",
+                iconLoad="pic_free/bulb_pixabay_clone.png",
+                showCellVoltage=True,
+                showCapacity=True,
+                disconnectAfterData=False,
+                timeout=15, fontsize=None, fontsizeSmall=None,
+                updatetimeS=10,
+                font=None, fontSmall=None, bg=None, fg=None,
+                verbose=False,
+                useBleak=False):
         try:
             self.fontsize = fontsize
             self.font = font
+            self.fontsizeSmall = fontsizeSmall
             self.fontSmall = fontSmall
             # calculate self.font = font
             self.mac = mac
@@ -77,7 +86,8 @@ class SupervoltBatteryGUI(tk.Canvas):
             self.showCellVoltage = showCellVoltage
             self.showCapacity = showCapacity
             self.disconnectAfterData = disconnectAfterData
-            self.timeout = timeout
+            if timeout:
+                self.timeout = timeout
             self.gui = gui
             self.orientation = orientation
             self.size = size
@@ -86,8 +96,11 @@ class SupervoltBatteryGUI(tk.Canvas):
                 self.fg = fg
             if bg is not None:
                 self.bg = bg
+                
+            if jsonConfig:
+                self.fromJSON(jsonConfig)
             if master is not None:
-                tk.Canvas.__init__(self, master, width=size[0], height=size[1], bg=self.bg)
+                tk.Canvas.__init__(self, master, width=self.size[0], height=self.size[1], bg=self.bg)
                 self.initUI()
                 self.pack()
                 logging.info("before battery")
@@ -95,6 +108,7 @@ class SupervoltBatteryGUI(tk.Canvas):
                     self.battery = supervoltbatterybleak.SupervoltBatteryBleak(mac=self.mac,
                                                                  verbose=self.verbose,
                                                                  updatetimeS=updatetimeS,
+                                                                 timeout=self.timeout,
                                                                  callbackAfterData=self.updateGUI,
                                                                  disconnectAfterData=self.disconnectAfterData)
                 else:
@@ -116,10 +130,15 @@ class SupervoltBatteryGUI(tk.Canvas):
             self.initUIText()
         elif self.gui == "graphic":
             if self.font is None:
-                self.font = tkFont.Font(family="Monospace", size=int(self.size[1] / 20), weight="bold")
+                if self.fontsize is None:
+                    self.font = tkFont.Font(family="Monospace", size=int(self.size[1] / 20), weight="bold")
+                else:
+                    self.font = tkFont.Font(family="Monospace", size=self.fontsize, weight="bold")
             if self.fontSmall is None:
-                self.fontSmall = tkFont.Font(family="Monospace", size=int(self.size[1] / 30), weight="normal")
-                
+                if self.fontsizeSmall is None:
+                    self.fontSmall = tkFont.Font(family="Monospace", size=int(self.size[1] / 30), weight="normal")
+                else:
+                    self.fontSmall = tkFont.Font(family="Monospace", size=self.fontsizeSmall, weight="normal")
             if self.orientation == "vertical":
                 self.initUIGraphicVertical()
             else:
@@ -372,7 +391,7 @@ class SupervoltBatteryGUI(tk.Canvas):
     def update(self):
         while (True):
             try:
-                time.sleep(self.updatetimeS)
+                time.sleep(min(self.updatetimeS, self.timeout))
                 self.updateGUI()
             except:
                 logging.error(sys.exc_info(), exc_info=True)
@@ -385,11 +404,49 @@ class SupervoltBatteryGUI(tk.Canvas):
         if self.battery is not None:
             return self.battery.toJSON(prefix)
         return ""
+    
+    def fromJSON(self, json=None):
+        if not json:
+            return
+        try:
+            if json.get("supervoltgui"):
+                json = json["supervoltgui"]
+            if json.get("supervolt"):
+                json = json["supervolt"]
+            if json.get("gui"):
+                json = json["gui"]
+            
+            if json.get("verbose"):
+                self.verbose = json["verbose"].upper() == "TRUE"
+            if json.get("mac"):
+                self.mac = json["mac"]
+            if json.get("iconBattery"):
+                self.iconBattery = json["iconBattery"]
+            if json.get("iconLoad"):
+                self.iconLoad = json["iconLoad"]
+            if json.get("showCellVoltage"):
+                self.showCellVoltage = json["showCellVoltage"].upper() == "TRUE"
+            if json.get("showCapacity"):
+                self.showCapacity = json["showCapacity"].upper() == "TRUE"
+            if json.get("sizeX") and json.get("sizeY"):
+                self.size = (int(json["sizeX"]), int(json["sizeY"]))
+                if self.verbose:
+                    logging.info("size: {}".format(self.size))
+            if json.get("fontsize"):
+                self.fontsize = int(json["fontsize"])
+            if json.get("fontsizeSmall"):
+                self.fontsizeSmall = int(json["fontsizeSmall"])
+            if json.get("timeout"):
+                self.timeout = float(json["timeout"])
+            if self.verbose:
+                logging.info("fromJSON: end")
+        except:
+            logging.error(sys.exc_info(), exc_info=True)
         
 
 def onClosingSupervolt():
     root.destroy()
-    os._exit(os.EX_OK)
+    os._exit(0)
 
         
 def main():
@@ -404,10 +461,24 @@ def main():
         frame = tk.Frame(root)
         frame.pack(side=tk.TOP, fill=tk.X)
     
-        mac = "84:28:D7:8F:XX:XX"
+        mac = None
+        configJSON = None
+        try:
+            filename = "config.json"
+        
+            if filename is not None and os.path.isfile(filename):
+                configJSON = json.load(open(filename))
+                logging.info("configfile loaded: {}".format(filename))
+                if configJSON.get("mac"):
+                    mac = configJSON["mac"]
+            else:
+                logging.info("configfile not found")
+        except:
+            logging.info(sys.exc_info(), exc_info=True)
+        
         if len(sys.argv) > 1 and sys.argv[1]:
             mac = sys.argv[1]
-        else:
+        elif not mac and not configJSON:
             logging.warning("usage: supervoltbatterygui.py <BLE-Address>")
             return
         pathToIcons = "../pic_free"
@@ -415,9 +486,12 @@ def main():
             pathToIcons = "pic_free"
             if not os.path.exists(pathToIcons):
                 logging.error("could not find icons")
-        app = SupervoltBatteryGUI(master=frame, mac=mac,
+        app = SupervoltBatteryGUI(master=frame,
+                                  mac=mac,
+                                  jsonConfig=configJSON,
                                   gui="graphic",
-                                  orientation="vertical", size=(240, 320),
+                                  orientation="vertical",
+                                  size=(240, 320),
                                   # orientation="horizontal", size=(400, 100),
                                   iconBattery=pathToIcons + "/battery_pixabay_clone.png",
                                   iconLoad=pathToIcons + "/bulb_pixabay_clone.png",
@@ -431,8 +505,7 @@ def main():
         while(True):
             time.sleep(10000)
     except:
-        e = sys.exc_info()
-        logging.info(e, exc_info=True)
+        logging.info(sys.exc_info(), exc_info=True)
 
 
 if __name__ == '__main__':

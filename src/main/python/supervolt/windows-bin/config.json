@@ -1,0 +1,13 @@
+{
+	"verbose": "true",
+	"mac": "84:28:D7:8F:XX:XX",
+	"iconBattery": "pic_free/battery_pixabay_clone.png",
+	"iconLoad": "pic_free/bulb_pixabay_clone.png",
+	"showCellVoltage": "true",
+	"showCapacity": "true",
+	"sizeX": 500,
+	"sizeY": 500,
+	"fontsize": "30",
+	"fontsizeSmall": 20,
+	"timeout": 5
+}

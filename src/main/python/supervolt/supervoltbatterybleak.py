@@ -59,9 +59,11 @@ class SupervoltBatteryBleak(atorlib.BleBleakBase):
                  data=None,
                  verbose=False,
                  updatetimeS=1,
+                 timeout=None,
                  callbackAfterData=None,
                  disconnectAfterData=False):
         super().__init__(mac=mac, name=name, mtuSize=246,
+                         timeout=timeout,
                          data=data, verbose=verbose, updatetimeS=updatetimeS, callbackAfterData=callbackAfterData,
                          disconnectAfterData=disconnectAfterData);
         if data:
