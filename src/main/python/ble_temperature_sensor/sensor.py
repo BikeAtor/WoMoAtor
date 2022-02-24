@@ -85,17 +85,21 @@ class SensorGovee(Sensor):
             if len(data) >= 11:
                 temp, hum, batt = struct.unpack_from("<HHB", data, 6)
                 if self.verbose:
-                    logging.info("govee {} {} {} {} {}".format(self.name,
+                    logging.info("govee {} {} {} {} {} {}".format(self.name,
                                                                 self.floatValue(data[0:2]) / 100,
                                                                 self.twosComplement(temp),
                                                                 hum / 100.0,
-                                                                batt))
+                                                                batt,
+                                                                data.hex()))
                 self.temperature = float(self.twosComplement(temp))
                 # sensor.temperature = self.floatValue100(advertisement.mfg_data[0:2]) / 100.0
                 self.humidity = float(hum / 100.0)
                 self.battery = batt
                 self.updateGUISensor(sensor)
                 return True
+            else:
+                if self.verbose:
+                    logging.info("govee wrong length: {} {}".format(len(data), data.hex()))
         except:
             logging.warning(sys.exc_info(), exc_info=True)
         return False
@@ -110,19 +114,22 @@ class SensorInkbird(Sensor):
         
     def parseData(self, data):
         try:
-            if len(data) >= 8:
+            if len(data) >= 7:
                 # temp = self.floatValue100(advertisement.mfg_data[0:2])
                 temp = float(int.from_bytes(data[0:2], byteorder='little', signed=True) / 100.0)
                 hum = self.floatValue100(data[2:4])
                 # bat = self.floatValue100(data[4:6])
                 bat = data[7]
                 if self.verbose:
-                    logging.info("inkbird {} {:.1f}° {:.0f}% {} {}".format(self.name, temp, hum, bat, data))
+                    logging.info("inkbird {} {:.1f}° {:.0f}% {} {}".format(self.name, temp, hum, bat, data.hex()))
                 self.temperature = float(temp)
                 self.humidity = float(hum)
                 self.battery = float(bat)
                 # TODO battery
                 return True
+            else:
+                if self.verbose:
+                    logging.info("inkbird wrong length: {} {}".format(len(data), data.hex()))
         except:
             logging.warning(sys.exc_info(), exc_info=True)
         return False
@@ -137,27 +144,36 @@ class SensorBrifit(Sensor):
         
     def parseData(self, data):
         try:
-            if len(data) == 20:
+            if len(data) == 20:  # bluepy
                 batt, temp, hum = struct.unpack('<BhH', data[11:16])
                 if self.verbose:
                     logging.info("brifit {} {:.1f}° {:.0f}% {} {}".format(self.name,
                                                                           temp / 16.0,
                                                                           hum / 16.0,
                                                                           batt / 16.0 * 100,
-                                                                          data[10:12]))
+                                                                          data.hex()))
                 self.temperature = float(temp / 16.0)
                 self.humidity = float(hum / 16.0)
                 self.battery = float(batt / 16.0 * 100)
                 # self.battery = float(data[11] / 16.0 * 10)
-                                
-                if False:
-                    temp = self.floatValue100(data[0:2])
-                    hum = self.floatValue100(data[2:4])
-                    logging.info("brifit2 {} {:.1f}° {:.0f}%".format(self.name, temp, hum))
-                    # sensor.temperature = float(temp)
-                    # sensor.humidity = float(hum)
-                # TODO battery
                 return True
+            elif len(data) == 18:  # bleak
+                batt, temp, hum = struct.unpack('<BhH', data[9:14])
+                if self.verbose:
+                    # logging.info("data: {}".format(data.hex()))
+                    logging.info("brifit {} {:.1f}° {:.0f}% {} {}".format(self.name,
+                                                                          temp / 16.0,
+                                                                          hum / 16.0,
+                                                                          batt / 16.0 * 100,
+                                                                          data.hex()))
+                self.temperature = float(temp / 16.0)
+                self.humidity = float(hum / 16.0)
+                self.battery = float(batt / 16.0 * 100)
+                # self.battery = float(data[11] / 16.0 * 10)
+                return True
+            else:
+                if self.verbose:
+                    logging.info("brifit wrong length: {} {}".format(len(data), data.hex()))
         except:
             logging.warning(sys.exc_info(), exc_info=True)
         return False
@@ -172,6 +188,8 @@ class SensorAzarton(Sensor):
         
     def parseData(self, data):
         try:
+            if self.verbose:
+                logging.info("brifit data: {} {}".format(len(data), data.hex()))
             if len(data) >= 2:
                 value = self.floatValue(data[0:2])
                 if self.verbose:

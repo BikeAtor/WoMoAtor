@@ -1,3 +1,5 @@
+import sys
+import logging
 from .sensortype import SensorType
 from .sensor import Sensor
 from .sensor import SensorAzarton
@@ -33,12 +35,19 @@ try:
     from .inkbirdth2 import InkbirdTH2
 except:
     pass
+# try:
+#    from .bluetoothtemperaturesensor import BluetoothTemperatureSensor
+# except:
+#    pass
 try:
-    from .bluetoothtemperaturesensor import BluetoothTemperatureSensor
+    from .blescannerbluepy import BluetoothScannerBluepy
+    logging.warning("no BluetoothScannerBluepy")
+    logging.warning(sys.exc_info())
 except:
     pass
 try:
-    from .blescanner import BluetoothScanner
-
+    from .blescannerbleak import BluetoothScannerBleak
+    logging.warning("no BluetoothScannerBleak")
+    logging.warning(sys.exc_info())
 except:
     pass

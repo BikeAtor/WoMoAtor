@@ -2,6 +2,9 @@
 
 import sys
 sys.path.append('..')
+sys.path.append('C:/msys64/mingw64/bin')
+import os
+os.environ['PATH'] = 'C:/msys64/mingw64/bin' + os.pathsep + os.environ['PATH']
 
 import os
 import logging
@@ -13,7 +16,7 @@ import atorlib
 # GUI
 import tkinter as tk
 import tkinter.font as tkFont
-import cairosvg
+# import cairosvg
 import io
 from PIL import Image, ImageTk
 
@@ -40,7 +43,7 @@ class MiGUI(atorlib.GuiIconValueBattery):
             self.valueNewline = valueNewline
         try:
             logging.debug("before sensor")
-            self.misensor = ble_temperature_sensor.MiSensorBluepy(mac=mac, name=name,
+            self.misensor = ble_temperature_sensor.MiSensorBleak(mac=mac, name=name,
                                                                  verbose=verbose,
                                                                  updatetimeS=updatetimeS,
                                                                  callbackAfterData=self.updateGUI,

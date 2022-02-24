@@ -28,21 +28,29 @@ class BatteryGuardGUI(atorlib.GuiIconValue):
                 disconnectAfterData=False,
                 timeout=5, fontsize=20, updatetimeS=60,
                 font=None, bg=None, fg=None,
-                verbose=False):
+                verbose=False,
+                useBleak=True):
         super().__init__(master=master, size=size, name=name,
                          gui=gui, iconName=iconName, disconnectAfterData=disconnectAfterData,
                          timeout=timeout, fontsize=fontsize, updatetimeS=updatetimeS,
                          font=font, bg=bg, fg=fg,
                          verbose=verbose)
         try:
-            logging.debug("before batteryguard")
-            self.batteryguard = batteryguard.BatteryGuard(mac=mac, name=name,
+            logging.info("before batteryguard")
+            if useBleak:
+                self.batteryguard = batteryguard.BatteryGuardBleak(mac=mac, name=name,
+                                                                 verbose=self.verbose,
+                                                                 updatetimeS=self.updatetimeS,
+                                                                 callbackAfterData=self.updateGUI,
+                                                                 disconnectAfterData=self.disconnectAfterData)
+            else:
+                self.batteryguard = batteryguard.BatteryGuardBluepy(mac=mac, name=name,
                                                                  verbose=self.verbose,
                                                                  updatetimeS=self.updatetimeS,
                                                                  callbackAfterData=self.updateGUI,
                                                                  disconnectAfterData=self.disconnectAfterData)
             self.batteryguard.startReading()
-            logging.debug("after batteryguard")
+            logging.info("after batteryguard")
         except:
             logging.error(sys.exc_info(), exc_info=True)
     

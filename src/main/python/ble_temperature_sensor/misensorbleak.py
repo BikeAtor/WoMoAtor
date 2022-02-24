@@ -7,6 +7,7 @@ sys.path.append('/home/pi/python/mitemp')
 import logging
 import threading
 import time
+import asyncio
 
 import atorlib
 import ble_temperature_sensor
@@ -41,7 +42,7 @@ class MiSensorBleak(atorlib.BleBleakBase):
             logging.info("init finished")
 
     # send request to battery for Realtime-Data
-    def requestData(self):
+    async def requestData(self):
         try:
             if self.device is not None:
                 if True:
@@ -51,9 +52,12 @@ class MiSensorBleak(atorlib.BleBleakBase):
                     if self.device.is_connected:
                         if True:
                             # enable notify
-                            self.device.start_notify(char_specifier=handle, callback=notification_handler)
+                            await self.device.start_notify(char_specifier=handle, callback=self.handleNotification)
                             if self.verbose:
                                 logging.info("notification send to characteristics {} {}".format(uuid, handle))
+                            await asyncio.sleep(5.0)  # TODO
+                            if self.device:
+                                await self.device.stop_notify(char_specifier=handle)
                         if False:
                             self.device.write_gatt_char(handle + 1, b"\x01\x00")
                             if self.verbose:
@@ -141,8 +145,13 @@ def main():
         mac = "58:2d:34:39:1a:c2"
         # Speicher
         mac = "58:2d:34:39:17:d2"
-        logging.debug("connect to: " + mac)
-        sensor = MiSensorBleak(mac=mac, name="MiTest", verbose=True, updatetimeS=10, disconnectAfterData=True)
+        if len(sys.argv) > 1 and sys.argv[1] is not None:
+            mac = sys.argv[1]
+        if not mac:
+            logging.warning("usage: misensorbleak.py <BLE-Address>")
+            return
+        logging.info("connect to " + mac)
+        sensor = MiSensorBleak(mac=mac, name="MiTest", verbose=True, updatetimeS=1, disconnectAfterData=True)
         sensor.startReading()
         while(True):
             time.sleep(10000)
@@ -151,5 +160,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
 

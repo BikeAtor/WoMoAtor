@@ -35,7 +35,14 @@ Verwendete Python-Module (evtl unvollständig):
 - (pydbus)
 
 Hier das Kommando zum installieren der benötigten Module:
+
+(sudo) pip3 install --upgrade setuptools
+
+Auf Windows-Systemen bluepy weglassen, da diese nicht unterstütz werden. Weiter muss [MSYS2](https://www.msys2.org/) installiert werden und dort mit "pacman -S mingw-w64-x86_64-python3-gobject" die Bibliotheken für die graphische Ausgabe (GUI). Danach muss %PATH% in den Umgebungsvariablen um <MSYS2>\mingw64\bin erweitert werden um die DLL-Dateien zu finden.
+Alternativ kann der Pfad auch in Python gesetzt werden.
+
 (sudo) pip3 install bluepy bleak bleson cairosvg schedule pillow
+
 (sudo) pip3 install pyscreenshot opencv-contrib-python pydbus
 
 ## Konfiguration mit JSON

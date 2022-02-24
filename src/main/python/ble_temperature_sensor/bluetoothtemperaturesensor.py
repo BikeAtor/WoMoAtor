@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+####################
+# # DEPRECATED
+####################
+
 import sys
 from time import sleep
 sys.path.append('.')
@@ -218,6 +222,7 @@ class BluetoothTemperatureSensor(tk.Frame):
                             if len(advertisement.mfg_data) == 20:
                                 batt, temp, hum = struct.unpack('<HhH', advertisement.mfg_data[10:16])
                                 if self.verbose:
+                                    logging.info("data: {}".format(advertisement.mfg_data))
                                     logging.info("brifit1 {} {:.1f}° {:.0f}%".format(sensor.name, temp / 16.0, hum / 16.0))
                                 sensor.temperature = float(temp / 16.0)
                                 sensor.humidity = float(hum / 16.0)

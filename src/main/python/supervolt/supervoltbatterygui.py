@@ -8,8 +8,16 @@ import logging
 import threading
 import time
 # import supervolt.supervoltbattery
-from supervolt import supervoltbattery
-
+try:
+    from supervolt import supervoltbatterybluepy
+except:
+    logging.warning("no bluepy")
+    pass
+try:
+    from supervolt import supervoltbatterybleak
+except:
+    logging.warning("no bleak")
+    pass
 # GUI
 import tkinter as tk
 import tkinter.font as tkFont
@@ -40,6 +48,7 @@ class SupervoltBatteryGUI(tk.Canvas):
     showCapacity = True
     disconnectAfterData = False
     updatetimeS = 60
+    useBleak = False
 
     def __init__(self, master=None, mac=None, size=(500, 500),
                   gui="graphic", orientation="vertical",
@@ -50,13 +59,12 @@ class SupervoltBatteryGUI(tk.Canvas):
                   disconnectAfterData=False,
                   timeout=5, fontsize=20, updatetimeS=10,
                   font=None, fontSmall=None, bg=None, fg=None,
-                  verbose=False):
+                  verbose=False,
+                  useBleak=False):
         try:
             self.fontsize = fontsize
             self.font = font
             self.fontSmall = fontSmall
-            self.updatetimeS = updatetimeS
-            self.maxtime = self.updatetimeS * 3
             # calculate self.font = font
             self.mac = mac
             self.iconBattery = iconBattery
@@ -78,9 +86,16 @@ class SupervoltBatteryGUI(tk.Canvas):
                 self.initUI()
                 self.pack()
                 logging.info("before battery")
-                self.battery = supervoltbattery.SupervoltBattery(mac=self.mac,
+                if useBleak:
+                    self.battery = supervoltbatterybleak.SupervoltBatteryBleak(mac=self.mac,
                                                                  verbose=self.verbose,
-                                                                 updatetimeS=self.updatetimeS,
+                                                                 updatetimeS=updatetimeS,
+                                                                 callbackAfterData=self.updateGUI,
+                                                                 disconnectAfterData=self.disconnectAfterData)
+                else:
+                    self.battery = supervoltbatterybluepy.SupervoltBatteryBluepy(mac=self.mac,
+                                                                 verbose=self.verbose,
+                                                                 updatetimeS=updatetimeS,
                                                                  callbackAfterData=self.updateGUI,
                                                                  disconnectAfterData=self.disconnectAfterData)
                 self.battery.startReading()
@@ -397,7 +412,8 @@ def main():
                                   iconLoad="../pic_free/bulb_pixabay_clone.png",
                                   disconnectAfterData=True,
                                   updatetimeS=5,
-                                  verbose=True)
+                                  verbose=True,
+                                  useBleak=True)
         logging.info("mainloop")
         root.mainloop()
         logging.info("after mainloop")
