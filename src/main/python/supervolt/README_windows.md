@@ -6,8 +6,8 @@ Die Ausführung unter Windows kann als ausführbare Datei ohne weitere Installat
 - Herunterladen der [Windows-ZIP-Datei](windows-bin/supervoltbatterygui_windows.zip).
 - Entpacken der ZIP-Datei.
 - Im Windows Explorer auf dem Verzeichnis "supervoltbatterygui" durch Rechtsclick und Auswählen von "Öffnen in Windows-Terminal" ein Windows-Terminal öffnen.
-- Aufruf von "suvervoltbatterygui.exe <MAC DER BATTERIE>" im Windows-Terminal.
-- Beendet wird das Programm im Windows-Terminal durch drücken von <STRG> und <Pause Untbr>.
+- Aufruf von "suvervoltbatterygui.exe &lt;MAC DER BATTERIE&gt;" im Windows-Terminal.
+- Beendet wird das Programm im Windows-Terminal durch drücken von &lt;STRG&gt; und &lt;Pause Untbr&gt;.
 
 
 Windows:
