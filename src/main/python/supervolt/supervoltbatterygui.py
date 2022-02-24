@@ -396,7 +396,8 @@ def main():
     try:
         global root
         logging.basicConfig(level=logging.DEBUG, format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s')
-
+        logging.getLogger().setLevel(logging.DEBUG)
+        
         root = tk.Tk()
         fontMedium = tkFont.Font(family="TkFixedFont", size=14, weight="bold")
         root.protocol("WM_DELETE_WINDOW", onClosingSupervolt)
