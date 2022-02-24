@@ -1,7 +1,7 @@
 # Supervolt Modul
 Mit diesem Python3-Modul ist es möglich die LiFePo4 Akkus von Supervolt auszulesen.
 
-Unter Windows kann die [Windows-EXE-Datei](windows-bin/supervoltbatterygui.exe) direkt ausgeführt werden.
+Unter Windows kann die [Windows-EXE-Datei](windows-bin/) direkt ausgeführt werden (Am besten ganzes Verzeichnis herunterladen).
 
 Die Konfiguration (incl. MAC) erfolgt über die Datei "config.json" im gleichen Verzeichnis wie die EXE-Datei.
 

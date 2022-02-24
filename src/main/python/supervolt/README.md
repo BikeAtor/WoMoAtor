@@ -1,5 +1,5 @@
 # Supervolt Modul
-Mit diesem Python3-Modul ist es möglich die LiFePo4 Akkus von Supervolt auszulesen.
+Mit diesem Python3-Modul ist es möglich die LiFePo4 Akkus von Supervolt auszulesen. Dies funktioniert sowohl auf den Raspberry Pi, als auch unter [Windows](README_windows.md).
 
 Raspberry:
 
