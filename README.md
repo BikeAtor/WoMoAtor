@@ -30,6 +30,7 @@ Verwendete Python-Module (evtl unvollständig):
 - cairosvg
 - schedule
 - pillow
+- pygobject
 - (pyscreenshot)
 - (opencv-contrib-python)
 - (pydbus)

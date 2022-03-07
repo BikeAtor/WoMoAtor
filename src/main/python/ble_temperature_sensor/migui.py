@@ -20,6 +20,15 @@ import tkinter.font as tkFont
 import io
 from PIL import Image, ImageTk
 
+useGi = False
+try:
+    from gi.repository import GObject
+    from gi.repository import GLib
+except:
+    logging.info("no gi")
+    useGi = False
+    pass
+
 
 class MiGUI(atorlib.GuiIconValueBattery):
     misensor = None
@@ -38,12 +47,20 @@ class MiGUI(atorlib.GuiIconValueBattery):
                 disconnectAfterData=False,
                 timeout=5, fontsize=20, updatetimeS=60,
                 font=None, bg=None, fg=None,
-                verbose=False):
+                verbose=False,
+                useBleak: bool=True):
         if valueNewline is not None:
             self.valueNewline = valueNewline
         try:
             logging.debug("before sensor")
-            self.misensor = ble_temperature_sensor.MiSensorBleak(mac=mac, name=name,
+            if useBleak:
+                self.misensor = ble_temperature_sensor.MiSensorBleak(mac=mac, name=name,
+                                                                 verbose=verbose,
+                                                                 updatetimeS=updatetimeS,
+                                                                 callbackAfterData=self.updateGUI,
+                                                                 disconnectAfterData=disconnectAfterData)
+            else:
+                self.misensor = ble_temperature_sensor.MiSensorBluepy(mac=mac, name=name,
                                                                  verbose=verbose,
                                                                  updatetimeS=updatetimeS,
                                                                  callbackAfterData=self.updateGUI,
@@ -65,7 +82,8 @@ class MiGUI(atorlib.GuiIconValueBattery):
                         verbose=verbose)
     
     def getText(self):
-        logging.info("start")
+        if self.verbose:
+            logging.info("start")
         text = "--° --%"
         if self.valueNewline:
             # logging.info("newline")
@@ -94,7 +112,8 @@ class MiGUI(atorlib.GuiIconValueBattery):
         return text
     
     def getBatteryLevel(self):
-        logging.info("start")
+        if self.verbose:
+            logging.info("start")
         if self.misensor is not None:
             sensor = self.misensor.getSensor()
             if sensor.battery is not None:
@@ -126,7 +145,9 @@ def main():
         root.protocol("WM_DELETE_WINDOW", onClosingMisensor)
         frame = tk.Frame(root)
         frame.pack(side=tk.TOP, fill=tk.X)
-    
+        
+        useBleak = False
+        # kühlschrank
         mac = "58:2d:34:39:1a:c2"
         # Speicher
         mac = "58:2d:34:39:17:d2"
@@ -145,11 +166,26 @@ def main():
                         batteryIconName4="../pic_free/battery_4_pixabay_clone.png",
                         # disconnectAfterData=False,
                         disconnectAfterData=True,
-                        updatetimeS=20,
-                        verbose=True)
-        logging.info("mainloop")
-        root.mainloop()
-        logging.info("after mainloop")
+                        updatetimeS=10,
+                        verbose=True,
+                        useBleak=useBleak)
+        if useBleak and useGi:
+            # create the dbus loop (must be global so we can terminate it)
+            # GObject.timeout_add(100, dbus_timeout_periodic)
+            if sys.version_info >= (3, 9):
+                dbus_loop = GLib.MainLoop()
+            else:
+                dbus_loop = GObject.MainLoop()
+
+            # ##Finally: start the dbus thread and then the Tk main loop
+            dbus_thread = threading.Thread(target=dbus_loop.run)
+            dbus_thread.start()
+            logging.info("tk+glib mainloop")
+            root.mainloop()
+        else:
+            logging.info("mainloop")
+            root.mainloop()
+            logging.info("after mainloop")
         while(True):
             time.sleep(10000)
     except:

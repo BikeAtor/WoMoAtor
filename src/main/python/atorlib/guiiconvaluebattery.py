@@ -88,7 +88,7 @@ class GuiIconValueBattery(atorlib.GuiIconValue):
             # icon
             batteryLevel = self.getBatteryLevel()
             # logging.info("{}".format(batteryLevel))
-            if batteryLevel is not None:
+            if batteryLevel:
                 iconName = None
                 if batteryLevel < 25:
                     iconName = self.batteryIconName1
@@ -110,7 +110,8 @@ class GuiIconValueBattery(atorlib.GuiIconValue):
                 else:
                     logging.info("no icon")
             else:
-                logging.info("no battery")
+                if self.verbose:
+                    logging.info("no battery")
             
         except:
             logging.info(sys.exc_info(), exc_info=True)

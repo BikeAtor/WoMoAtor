@@ -2,16 +2,18 @@ import sys
 import logging
 from .blebase import BleBase
 try:
+    import bluepy
     from .blebluepybase import BleBluepyBase
 except:
     logging.warning("no BleBluepyBase")
-    logging.warning(sys.exc_info())
+    logging.warning(sys.exc_info(), exc_info=True)
     pass
 try:
+    import bleak
     from .blebleakbase import BleBleakBase
 except:
     logging.warning("no BleBleakBase")
-    logging.warning(sys.exc_info())
+    logging.warning(sys.exc_info(), exc_info=True)
     pass
 
 from .serialbase import SerialBase

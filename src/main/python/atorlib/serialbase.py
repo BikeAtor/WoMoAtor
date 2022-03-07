@@ -198,6 +198,9 @@ class SerialBase():
                         if line == "ID: " + self.id:
                             logging.info("found: {} {}".format(p, line))
                             return p
+                        if line.startswith("ID: "):
+                            logging.info("wrong ID: {}".format(self.id))
+                            break;
                     else:
                         logging.info("no line: {}".format(p))
                         break

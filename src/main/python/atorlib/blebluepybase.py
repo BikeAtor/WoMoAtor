@@ -47,7 +47,7 @@ class BleBluepyBase(atorlib.BleBase):
             with self.lock:
                 if self.peripheral is None:
                     logging.info("connect to: {} ({})".format(self.mac, self.name))
-                    self.peripheral = bluepy.btle.Peripheral(self.mac, iface=0)
+                    self.peripheral = bluepy.btle.Peripheral(deviceAddr=self.mac, iface=0)
                     if self.mtuSize is not None:
                         self.peripheral.setMTU(self.mtuSize)
                     self.peripheral.withDelegate(self)
@@ -66,7 +66,7 @@ class BleBluepyBase(atorlib.BleBase):
     
     def disconnect(self):
         try:
-            if self.peripheral is not None:
+            if self.peripheral:
                 logging.info("disconnect from: {}".format(self.mac))
                 self.peripheral.disconnect()
         except:

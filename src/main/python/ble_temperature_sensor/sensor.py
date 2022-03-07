@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import sys
+from numpy.core import _string_helpers
+import string
 sys.path.append('..')
 sys.path.append('lib')
 
@@ -11,14 +13,16 @@ import struct
 
 
 class Sensor:
-    name = None
-    address = None
-    type = None
-    temperature = None
-    humidity = None
-    battery = None
+    name: string = None
+    id: string = None
+    address: string = None
+    type: ble_temperature_sensor.SensorType = None
+    temperature: float = None
+    humidity: float = None
+    battery: float = None
     callbackAfterData = None
-    verbose = False
+    verbose: bool = False
+    jsonPrefix: string = None
     
     def __init__(self, name=None, address=None,
                  type=ble_temperature_sensor.SensorType.UNKNOWN, callbackAfterData=None,
@@ -33,7 +37,23 @@ class Sensor:
     @abstractmethod
     def parseData(self, data):
         return False
+    
+    def setId(self, id: string):
+        self.id = id
         
+    def setName(self, name: string):
+        self.name = name
+        
+    def setMac(self, mac: string):
+        self.address = mac.lower()
+    
+    def setJsonPrefix(self, prefix: string):
+        self.jsonPrefix = prefix
+        
+    def setVerbose(self, verbose: string):
+        if verbose:
+            self.verbose = prefix.upper() == "TRUE"
+
     def resetValues(self):
         self.temperature = None
         self.humidity = None
@@ -41,8 +61,10 @@ class Sensor:
     def toJSON(self, prefix="sensor"):
         json = ""
         prefixText = ""
-        if prefix is not None:
+        if prefix:
             prefixText = prefix + "_"
+        elif self.jsonPrefix:
+            prefixText = self.jsonPrefix + "_"
         try:
             if self.temperature is not None:
                 json += "\"" + prefixText + "temperature\": {}".format(self.temperature) + ",\n"

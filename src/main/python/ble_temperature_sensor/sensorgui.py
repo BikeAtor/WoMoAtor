@@ -116,7 +116,7 @@ def main():
         frame.pack(side=tk.TOP, fill=tk.X)
         balloon = tix.Balloon(root)
     
-        if True:
+        if False:
             sensor = ble_temperature_sensor.Sensor()
             sensor.name = "Tescht"
             sensor.temperature = 34.56
@@ -162,16 +162,18 @@ def main():
                         updatetimeS=20,
                         verbose=True)
             
-        if False:
-            scanner = ble_temperature_sensor.BluetoothScanner(verbose=False)
+        if True:
+            scanner = ble_temperature_sensor.BluetoothScannerBleak(verbose=False)
             sensor = None
-            sensor = ble_temperature_sensor.SensorInkbird(name="Grau", address="10:08:2C:21:DF:0C", verbose=True)
+            # sensor = ble_temperature_sensor.SensorInkbird(name="Grau", address="10:08:2C:21:DF:0C", verbose=True)
+            # scanner.addSensor(sensor)
+            sensor = ble_temperature_sensor.SensorBrifit(name="Gefrier", address="e9:47:00:00:22:c2", verbose=False)
             scanner.addSensor(sensor)
             sensor2 = None
             sensor2 = ble_temperature_sensor.SensorBrifit(name="Ventil", address="E9:54:00:00:02:BE", verbose=True)
             scanner.addSensor(sensor2)
             
-            if sensor is not None:
+            if sensor:
                 SensorGUI(sensor=sensor,
                         master=frame,
                         name=sensor.name,
@@ -190,7 +192,7 @@ def main():
                         disconnectAfterData=True,
                         updatetimeS=20,
                         verbose=True)
-            if sensor2 is not None:
+            if sensor2:
                 SensorGUI(sensor=sensor2,
                         master=frame,
                         name=sensor2.name,

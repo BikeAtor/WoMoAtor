@@ -54,7 +54,7 @@ class BatteryGuardBleak(atorlib.BleBleakBase):
     # try to read values from data
     def parseData(self, data):
         if self.verbose:
-            logging.debug("parseData: " + str(data))
+            logging.info("parseData: " + str(data))
         try:
             if data is not None:
                 if self.verbose:

@@ -25,7 +25,6 @@ try:
 except:
     logging.warning("no bleak")
     pass
-from supervolt import supervoltbatterybleak
 # GUI
 import tkinter as tk
 import tkinter.font as tkFont
@@ -61,7 +60,9 @@ class SupervoltBatteryGUI(tk.Canvas):
     useBleak = False
     timeout: float = None
 
-    def __init__(self, master=None, mac=None, size=(500, 500),
+    def __init__(self, master=None,
+                mac=None, name=None,
+                size=(500, 500),
                 jsonConfig=None,
                 gui="graphic", orientation="vertical",
                 iconBattery="pic_free/battery_pixabay_clone.png",
@@ -105,7 +106,7 @@ class SupervoltBatteryGUI(tk.Canvas):
                 self.pack()
                 logging.info("before battery")
                 if useBleak:
-                    self.battery = supervoltbatterybleak.SupervoltBatteryBleak(mac=self.mac,
+                    self.battery = supervoltbatterybleak.SupervoltBatteryBleak(mac=self.mac, name=name,
                                                                  verbose=self.verbose,
                                                                  updatetimeS=updatetimeS,
                                                                  timeout=self.timeout,
@@ -310,7 +311,8 @@ class SupervoltBatteryGUI(tk.Canvas):
                 j = 0
                 for i in range(0, 11):
                     if self.battery.cellV[i] is not None and self.battery.cellV[i] > 0:
-                        logging.info("Cell {}: {}V".format(i, self.battery.cellV[i]))
+                        if self.verbose:
+                            logging.info("Cell {}: {}V".format(i, self.battery.cellV[i]))
                         j += 1
                         if len(textCell) > 0:
                             if j % 2 == 1:

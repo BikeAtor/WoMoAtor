@@ -112,16 +112,18 @@ class BleBleakBase(atorlib.BleBase):
             await self.disconnect()
             self.checkAgeOfValues()
             logging.error(sys.exc_info())
-            logging.error(sys.exc_info(), exc_info=True)
+            # logging.error(sys.exc_info(), exc_info=True)
 
     def isConnected(self) -> bool:
         return self.device is not None
     
     async def disconnect(self):
         try:
-            if self.device is not None:
+            if self.device:
+                dev = self.device
+                self.device = None
                 logging.info("disconnect from: {}".format(self.mac))
-                await self.device.disconnect()
+                await dev.disconnect()
         except:
             logging.error(sys.exc_info(), exc_info=True)
         self.device = None
