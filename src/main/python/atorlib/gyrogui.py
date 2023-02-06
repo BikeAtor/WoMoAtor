@@ -83,7 +83,10 @@ class GyroGUI(tk.Canvas):
             time.sleep(1)
         
     def initUI(self):
-        self.delete("all")
+        try:
+            self.delete("all")
+        except:
+            logging.error(sys.exc_info(), exc_info=True)
         width = self.size[0]
         height = self.size[1]
         centerX = width / 2

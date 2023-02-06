@@ -21,7 +21,9 @@ from PIL import Image, ImageTk
 class BatteryGuardGUI(atorlib.GuiIconValue):
     batteryguard = None
 
-    def __init__(self, master=None, mac=None, size=(500, 500),
+    def __init__(self, master=None,
+                adapter: int=0,
+                mac=None, size=(500, 500),
                 name=None,
                 gui="graphic", orientation="vertical",
                 iconName="pic_free/battery2_pixabay_clone.png",
@@ -39,16 +41,18 @@ class BatteryGuardGUI(atorlib.GuiIconValue):
             logging.info("before batteryguard")
             if useBleak:
                 self.batteryguard = batteryguard.BatteryGuardBleak(mac=mac, name=name,
-                                                                 verbose=self.verbose,
-                                                                 updatetimeS=self.updatetimeS,
-                                                                 callbackAfterData=self.updateGUI,
-                                                                 disconnectAfterData=self.disconnectAfterData)
+                                                                adapter=adapter,
+                                                                verbose=self.verbose,
+                                                                updatetimeS=self.updatetimeS,
+                                                                callbackAfterData=self.updateGUI,
+                                                                disconnectAfterData=self.disconnectAfterData)
             else:
                 self.batteryguard = batteryguard.BatteryGuardBluepy(mac=mac, name=name,
-                                                                 verbose=self.verbose,
-                                                                 updatetimeS=self.updatetimeS,
-                                                                 callbackAfterData=self.updateGUI,
-                                                                 disconnectAfterData=self.disconnectAfterData)
+                                                                adapter=adapter,
+                                                                verbose=self.verbose,
+                                                                updatetimeS=self.updatetimeS,
+                                                                callbackAfterData=self.updateGUI,
+                                                                disconnectAfterData=self.disconnectAfterData)
             self.batteryguard.startReading()
             logging.info("after batteryguard")
         except:

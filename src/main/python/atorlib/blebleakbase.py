@@ -26,6 +26,7 @@ class BleBleakBase(atorlib.BleBase):
     timeout: float = 30.0
     
     def __init__(self,
+                 adapter:int=0,
                  mac=None,
                  name=None,
                  mtuSize=None,
@@ -35,7 +36,7 @@ class BleBleakBase(atorlib.BleBase):
                  timeout=None,
                  callbackAfterData=None,
                  disconnectAfterData=False):
-        super().__init__(mac=mac, name=name, mtuSize=mtuSize,
+        super().__init__(adapter=adapter, mac=mac, name=name, mtuSize=mtuSize,
                          data=data, verbose=verbose, updatetimeS=updatetimeS, callbackAfterData=callbackAfterData,
                          disconnectAfterData=disconnectAfterData,
                          useBleak=True);
@@ -85,9 +86,9 @@ class BleBleakBase(atorlib.BleBase):
                 logging.info("wait for lock")
             with self.lock:
                 if self.device is None:
-                    logging.info("connect to: {} ({}) {}s".format(self.mac, self.name, self.timeout))
+                    logging.info("connect to: {} {} ({}) {}s".format(self.adapter, self.mac, self.name, self.timeout))
                     if True:
-                        self.device = bleak.BleakClient(self.mac, timeout=self.timeout)
+                        self.device = bleak.BleakClient(self.mac, timeout=self.timeout, adapter="hci{}".format(self.adapter))
                         if self.device:
                             await self.device.connect()
                             if self.verbose:

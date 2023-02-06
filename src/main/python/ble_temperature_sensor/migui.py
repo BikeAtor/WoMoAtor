@@ -39,7 +39,10 @@ class MiGUI(atorlib.GuiIconValueBattery):
                 batteryIconName2=None,
                 batteryIconName3=None,
                 batteryIconName4=None,
-                master=None, mac=None, size=(500, 500),
+                master=None,
+                adapter: int=0,
+                mac=None,
+                size=(500, 500),
                 name=None, showName=True,
                 gui="graphic", orientation="vertical",
                 valueNewline=None,
@@ -54,17 +57,23 @@ class MiGUI(atorlib.GuiIconValueBattery):
         try:
             logging.debug("before sensor")
             if useBleak:
-                self.misensor = ble_temperature_sensor.MiSensorBleak(mac=mac, name=name,
-                                                                 verbose=verbose,
-                                                                 updatetimeS=updatetimeS,
-                                                                 callbackAfterData=self.updateGUI,
-                                                                 disconnectAfterData=disconnectAfterData)
+                self.misensor = ble_temperature_sensor.MiSensorBleak(
+                                            adapter=adapter,
+                                            mac=mac,
+                                            name=name,
+                                            verbose=verbose,
+                                            updatetimeS=updatetimeS,
+                                            callbackAfterData=self.updateGUI,
+                                            disconnectAfterData=disconnectAfterData)
             else:
-                self.misensor = ble_temperature_sensor.MiSensorBluepy(mac=mac, name=name,
-                                                                 verbose=verbose,
-                                                                 updatetimeS=updatetimeS,
-                                                                 callbackAfterData=self.updateGUI,
-                                                                 disconnectAfterData=disconnectAfterData)
+                self.misensor = ble_temperature_sensor.MiSensorBluepy(
+                                            adapter=adapter,
+                                            mac=mac,
+                                            name=name,
+                                            verbose=verbose,
+                                            updatetimeS=updatetimeS,
+                                            callbackAfterData=self.updateGUI,
+                                            disconnectAfterData=disconnectAfterData)
             self.misensor.startReading()
             logging.info("after sensor")
         except:

@@ -21,6 +21,7 @@ class BleBase():
     disconnectAfterData = False;
     updatetimeS = 1
     callbackAfterData = None
+    adapter:int = 0
     
     # time of data changed
     lastUpdatetime = time.time()
@@ -31,6 +32,7 @@ class BleBase():
     useBleak = False
     
     def __init__(self,
+                 adapter: int=0,
                  mac=None,
                  name=None,
                  mtuSize=None,
@@ -40,6 +42,7 @@ class BleBase():
                  callbackAfterData=None,
                  disconnectAfterData=False,
                  useBleak=False):
+        self.adapter = adapter
         self.verbose = verbose
         self.mac = mac
         self.name = name

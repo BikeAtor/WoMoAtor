@@ -55,12 +55,15 @@ class SupervoltBatteryGUI(tk.Canvas):
     verbose = False
     showCellVoltage = True
     showCapacity = True
+    showWorkingState = True
+    showTemperature = True
     disconnectAfterData = False
     updatetimeS = 60
     useBleak = False
     timeout: float = None
 
     def __init__(self, master=None,
+                adapter: int=0,
                 mac=None, name=None,
                 size=(500, 500),
                 jsonConfig=None,
@@ -69,8 +72,10 @@ class SupervoltBatteryGUI(tk.Canvas):
                 iconLoad="pic_free/bulb_pixabay_clone.png",
                 showCellVoltage=True,
                 showCapacity=True,
+                showWorkingState=True,
+                showTemperature=True,
                 disconnectAfterData=False,
-                timeout=15, fontsize=None, fontsizeSmall=None,
+                timeout=25, fontsize=None, fontsizeSmall=None,
                 updatetimeS=10,
                 font=None, fontSmall=None, bg=None, fg=None,
                 verbose=False,
@@ -86,6 +91,8 @@ class SupervoltBatteryGUI(tk.Canvas):
             self.iconLoad = iconLoad
             self.showCellVoltage = showCellVoltage
             self.showCapacity = showCapacity
+            self.showWorkingState = showWorkingState
+            self.showTemperature = showTemperature
             self.disconnectAfterData = disconnectAfterData
             if timeout:
                 self.timeout = timeout
@@ -106,18 +113,24 @@ class SupervoltBatteryGUI(tk.Canvas):
                 self.pack()
                 logging.info("before battery")
                 if useBleak:
-                    self.battery = supervoltbatterybleak.SupervoltBatteryBleak(mac=self.mac, name=name,
-                                                                 verbose=self.verbose,
-                                                                 updatetimeS=updatetimeS,
-                                                                 timeout=self.timeout,
-                                                                 callbackAfterData=self.updateGUI,
-                                                                 disconnectAfterData=self.disconnectAfterData)
+                    self.battery = supervoltbatterybleak.SupervoltBatteryBleak(
+                                                                adapter=adapter,
+                                                                mac=self.mac,
+                                                                name=name,
+                                                                verbose=self.verbose,
+                                                                updatetimeS=updatetimeS,
+                                                                timeout=self.timeout,
+                                                                callbackAfterData=self.updateGUI,
+                                                                disconnectAfterData=self.disconnectAfterData)
                 else:
-                    self.battery = supervoltbatterybluepy.SupervoltBatteryBluepy(mac=self.mac,
-                                                                 verbose=self.verbose,
-                                                                 updatetimeS=updatetimeS,
-                                                                 callbackAfterData=self.updateGUI,
-                                                                 disconnectAfterData=self.disconnectAfterData)
+                    self.battery = supervoltbatterybluepy.SupervoltBatteryBluepy(
+                                                                adapter=adapter,
+                                                                mac=self.mac,
+                                                                name=name,
+                                                                verbose=self.verbose,
+                                                                updatetimeS=updatetimeS,
+                                                                callbackAfterData=self.updateGUI,
+                                                                disconnectAfterData=self.disconnectAfterData)
                 self.battery.startReading()
                 logging.info("after battery")
                 threading.Thread(target=self.update).start()
@@ -288,17 +301,19 @@ class SupervoltBatteryGUI(tk.Canvas):
                     text += "- V\n"
                 else:
                     text += "{:.2f} V\n".format(voltage)
-                temp = self.battery.tempC[0]
-                if temp is None:
-                    text += "-°C\n"
-                else:
-                    text += "{:.0f}°C\n".format(temp)
+                if self.showTemperature:
+                    temp = self.battery.tempC[0]
+                    if temp is None:
+                        text += "-°C\n"
+                    else:
+                        text += "{:.0f}°C\n".format(temp)
                 soc = self.battery.soc
                 if soc is None:
                     text += "- %\n"
                 else:
                     text += "{:.0f} %\n".format(soc)
-                text += self.battery.getWorkingStateTextShort().replace(" ", "\n");
+                if self.showWorkingState:
+                    text += self.battery.getWorkingStateTextShort().replace(" ", "\n");
         except:
             logging.error(sys.exc_info(), exc_info=True)
             text = "error"

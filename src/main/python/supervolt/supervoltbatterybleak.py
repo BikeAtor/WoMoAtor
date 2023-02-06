@@ -40,7 +40,7 @@ import logging
 # read data from notification
 class SupervoltBatteryBleak(atorlib.BleBleakBase):
 
-    cellV = [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None]
+    cellV = None
     totalV = None
     soc = None
     workingState = None
@@ -48,12 +48,13 @@ class SupervoltBatteryBleak(atorlib.BleBleakBase):
     chargingA = None;
     dischargingA = None;
     loadA = None
-    tempC = [None, None, None, None]
+    tempC = None
     completeAh = None
     remainingAh = None
     designedAh = None
     
     def __init__(self,
+                 adapter: int=0,
                  name=None,
                  mac=None,
                  data=None,
@@ -62,10 +63,12 @@ class SupervoltBatteryBleak(atorlib.BleBleakBase):
                  timeout=None,
                  callbackAfterData=None,
                  disconnectAfterData=False):
-        super().__init__(mac=mac, name=name, mtuSize=246,
+        super().__init__(adapter=adapter, mac=mac, name=name, mtuSize=246,
                          timeout=timeout,
                          data=data, verbose=verbose, updatetimeS=updatetimeS, callbackAfterData=callbackAfterData,
-                         disconnectAfterData=disconnectAfterData);
+                         disconnectAfterData=disconnectAfterData)
+        self.tempC = [None, None, None, None]
+        self.cellV = [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None]
         if data:
             self.parseData(data)
             
@@ -185,12 +188,13 @@ class SupervoltBatteryBleak(atorlib.BleBleakBase):
                         bvoltarray = data[start: end]
                         # print("voltarray: " + str(bvoltarray))
                         self.totalV = 0
-                        for i in range(0, 11):
-                            bvolt = data[(start + i * 4): (start + i * 4 + 4)]
-                            self.cellV[i] = int(bvolt.decode(), 16) / 1000.0
-                            self.totalV += self.cellV[i]
-                            if self.verbose:
-                                logging.debug("volt" + str(i) + ": " + str(bvolt) + " / " + str(self.cellV[i]) + "V")
+                        if self.cellV:
+                            for i in range(0, 11):
+                                bvolt = data[(start + i * 4): (start + i * 4 + 4)]
+                                self.cellV[i] = int(bvolt.decode(), 16) / 1000.0
+                                self.totalV += self.cellV[i]
+                                if self.verbose:
+                                    logging.debug("volt" + str(i) + ": " + str(bvolt) + " / " + str(self.cellV[i]) + "V")
                         
                         if self.verbose:
                             logging.debug("totalVolt: " + str(self.totalV))
@@ -222,10 +226,11 @@ class SupervoltBatteryBleak(atorlib.BleBleakBase):
                         for i in range(0, 4):
                             start = end
                             end = start + 2
-                            btemp = data[start: end]
-                            self.tempC[i] = int(btemp.decode(), 16) - 40
-                            if self.verbose:
-                                logging.debug("temp" + str(i) + ": " + str(btemp) + " / " + str(self.tempC[i]) + "°C")
+                            if self.tempC:
+                                btemp = data[start: end]
+                                self.tempC[i] = int(btemp.decode(), 16) - 40
+                                if self.verbose:
+                                    logging.debug("temp" + str(i) + ": " + str(btemp) + " / " + str(self.tempC[i]) + "°C")
                         
                         start = end
                         end = start + 4
@@ -334,8 +339,9 @@ class SupervoltBatteryBleak(atorlib.BleBleakBase):
             logging.info("reset")
             self.alarm = None
             self.balanceState = None
-            for i in range(0, 11):
-                self.cellV[i] = None
+            if self.cellV:
+                for i in range(0, 11):
+                    self.cellV[i] = None
             self.chargeNumber = None
             self.chargingA = None
             self.completeAh = None
@@ -345,8 +351,9 @@ class SupervoltBatteryBleak(atorlib.BleBleakBase):
             self.loadA = None
             self.remainingAh = None
             self.soc = None
-            for i in range(0, 4):
-                self.tempC[i] = None
+            if self.tempC:
+                for i in range(0, 4):
+                    self.tempC[i] = None
             self.totalV = None
             self.version = None
             self.workingState = None
@@ -419,18 +426,20 @@ class SupervoltBatteryBleak(atorlib.BleBleakBase):
         if prefix is not None:
             prefixText = prefix + "_"
         try:
-            if self.tempC[0] is not None:
-                json += "\"" + prefixText + "temperature\": {}".format(self.tempC[0]) + ",\n"
+            if self.tempC:
+                if self.tempC[0] is not None:
+                    json += "\"" + prefixText + "temperature\": {}".format(self.tempC[0]) + ",\n"
             if self.totalV is not None:
                 json += "\"" + prefixText + "voltage\": {}".format(self.totalV) + ",\n"
-            if self.cellV[0] is not None:
-                json += "\"" + prefixText + "voltage_cell0\": {}".format(self.cellV[0]) + ",\n"
-            if self.cellV[1] is not None:
-                json += "\"" + prefixText + "voltage_cell1\": {}".format(self.cellV[1]) + ",\n"
-            if self.cellV[2] is not None:
-                json += "\"" + prefixText + "voltage_cell2\": {}".format(self.cellV[2]) + ",\n"
-            if self.cellV[3] is not None:
-                json += "\"" + prefixText + "voltage_cell3\": {}".format(self.cellV[3]) + ",\n"
+            if self.cellV:
+                if self.cellV[0] is not None:
+                    json += "\"" + prefixText + "voltage_cell0\": {}".format(self.cellV[0]) + ",\n"
+                if self.cellV[1] is not None:
+                    json += "\"" + prefixText + "voltage_cell1\": {}".format(self.cellV[1]) + ",\n"
+                if self.cellV[2] is not None:
+                    json += "\"" + prefixText + "voltage_cell2\": {}".format(self.cellV[2]) + ",\n"
+                if self.cellV[3] is not None:
+                    json += "\"" + prefixText + "voltage_cell3\": {}".format(self.cellV[3]) + ",\n"
             if self.soc is not None:
                 json += "\"" + prefixText + "soc\": {}".format(self.soc) + ",\n"
             if self.chargingA is not None:

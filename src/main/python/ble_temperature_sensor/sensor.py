@@ -10,9 +10,10 @@ import logging
 import ble_temperature_sensor
 from abc import abstractmethod
 import struct
+import sensor
 
 
-class Sensor:
+class Sensor(sensor.Sensor):
     name: string = None
     id: string = None
     address: string = None
@@ -53,10 +54,20 @@ class Sensor:
     def setVerbose(self, verbose: string):
         if verbose:
             self.verbose = prefix.upper() == "TRUE"
+            
+    def getBatteryLevel(self) -> float:
+        return self.battery;
+    
+    def getTemperature(self) -> float:
+        return self.temperature;
+    
+    def getHumidity(self) -> float:
+        return self.humidity;
 
     def resetValues(self):
         self.temperature = None
         self.humidity = None
+        self.battery = None
         
     def toJSON(self, prefix="sensor"):
         json = ""

@@ -37,7 +37,9 @@ import logging
 # read data from notification
 class SupervoltBatteryBluepy():
     verbose = False
+    adapter: int = 0
     mac = None
+    name = "Supervolt";
     disconnectAfterData = False;
     updatetimeS = 1
     lastUpdatetime = time.time()
@@ -48,7 +50,7 @@ class SupervoltBatteryBluepy():
     lastNotificationTime = time.time()
     
     data = None
-    cellV = [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None]
+    cellV = None
     totalV = None
     soc = None
     workingState = None
@@ -56,7 +58,7 @@ class SupervoltBatteryBluepy():
     chargingA = None;
     dischargingA = None;
     loadA = None
-    tempC = [None, None, None, None]
+    tempC = None
     completeAh = None
     remainingAh = None
     designedAh = None
@@ -64,16 +66,24 @@ class SupervoltBatteryBluepy():
     sleepBetweenRequests = 0.2
     
     def __init__(self,
+                 adapter: int=0,
                  mac=None,
+                 name=None,
                  data=None,
                  verbose=False,
                  updatetimeS=1,
                  callbackAfterData=None,
                  disconnectAfterData=False):
+        self.tempC = [None, None, None, None]
+        self.cellV = [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None]
+
+        self.adapter = adapter
         self.data = data
         self.verbose = verbose
         # self.parseData()
         self.mac = mac
+        if name:
+            self.name = name
         self.updatetimeS = updatetimeS
         self.maxtime = self.updatetimeS * 5
         self.callbackAfterData = callbackAfterData
@@ -92,8 +102,8 @@ class SupervoltBatteryBluepy():
     def connect(self):
         try:
             if self.peripheral is None:
-                logging.info("connect to: {} (Supervolt)".format(self.mac))
-                self.peripheral = bluepy.btle.Peripheral(self.mac, iface=0)
+                logging.info("connect to: {} {} ({})".format(self.adapter, self.mac, self.name))
+                self.peripheral = bluepy.btle.Peripheral(self.mac, iface=self.adapter)
                 # MTU must be set for notifications to 247
                 # logging.info("mtu: {}".format(self.peripheral.getMTU()))
                 self.peripheral.setMTU(246)

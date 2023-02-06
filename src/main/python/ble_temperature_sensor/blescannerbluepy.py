@@ -21,8 +21,10 @@ class BluetoothScannerBluepy():
     sensors = []
     sensorLabels = {}
     verbose = False
+    adapter: int = 0
  
-    def __init__(self, updatetime=60, verbose=False):
+    def __init__(self, adapter: int=0, updatetime=60, verbose=False):
+        self.adapter = adapter
         self.updatetime = updatetime
         self.verbose = verbose
         threading.Thread(target=self.update).start()
@@ -43,11 +45,11 @@ class BluetoothScannerBluepy():
             # wait for main-thread
             time.sleep(5)
             try:
-                adapter = get_provider().get_adapter()
+                adapter = get_provider().get_adapter(adapter_id=self.adapter)
 
                 observer = Observer(adapter)
                 observer.on_advertising_data = self.onData
-                logging.info("observer created")
+                logging.info("observer created. adapter: {}".format(self.adapter))
                 
                 while True:
                     try:

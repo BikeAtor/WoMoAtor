@@ -22,6 +22,7 @@ class MiSensorBluepy(atorlib.BleBluepyBase):
     sensor = None
 
     def __init__(self,
+                 adapter: int=0,
                  mac=None,
                  name=None,
                  data=None,
@@ -29,7 +30,7 @@ class MiSensorBluepy(atorlib.BleBluepyBase):
                  updatetimeS=1,
                  callbackAfterData=None,
                  disconnectAfterData=False):
-        super().__init__(mac=mac, name=name, data=data, verbose=verbose,
+        super().__init__(adapter=adapter, mac=mac, name=name, data=data, verbose=verbose,
                updatetimeS=updatetimeS, callbackAfterData=callbackAfterData, disconnectAfterData=disconnectAfterData)
         self.sensor = ble_temperature_sensor.Sensor(name=self.name, address=mac,
                                                     type=ble_temperature_sensor.SensorType.AZARTON

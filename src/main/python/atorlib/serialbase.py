@@ -11,21 +11,23 @@ from cffi.pkgconfig import call
 
 # read data from serial interface
 class SerialBase():
-    verbose = False
-    port = None
-    id = None
+    verbose: bool = False
+    port: str = None
+    id: str = None
     ports = {"/dev/ttyUSB0", "/dev/ttyUSB1", "/dev/ttyUSB2", "/dev/ttyUSB3", "/dev/ttyUSB4", "/dev/ttyUSB5", "/dev/ttyUSB6"}
     serial = None
-    name = None
-    mtuSize = None
-    baudrate = 115200
-    timeout = 20
-    disconnectAfterData = False;
+    name: str = None
+    mtuSize: int = None
+    baudrate: int = 115200
+    timeout: int = 20
+    disconnectAfterData = False
     callbackAfterData = None
-    jsonPrefix = None
+    jsonPrefix: str = None
+    
+    readingStartet: bool = False
     
     lastUpdatetime = time.time()
-    maxtime = 70  # seconds
+    maxtime: int = 70  # seconds
     
     def __init__(self,
                  port=None,
@@ -62,6 +64,11 @@ class SerialBase():
     def resetValues(self):
         raise NotImplementedError()
     
+    def setVerbose(self, value: str):
+        if value:
+            self.verbose = ("TRUE" == value.upper())
+        logging.info("verbose: {}".format(self.verbose))
+        
     def setName(self, name):
         self.name = name
         if self.name is None:
@@ -71,6 +78,7 @@ class SerialBase():
         self.id = id
         if self.id:
             self.port = self.findPortByID()
+            # self.startReading()
             
     def setJsonPrefix(self, prefix):
         self.jsonPrefix = prefix
@@ -87,14 +95,18 @@ class SerialBase():
     
     def checkAgeOfValues(self):
         if (time.time() - self.lastUpdatetime) > self.maxtime:
-            logging.debug("reset values after time {}/{}".format(self.maxtime, (time.time() - self.lastUpdatetime)))
+            logging.debug("reset values after time {} {}/{}".format(self.id, self.maxtime, (time.time() - self.lastUpdatetime)))
             self.resetValues()
             self.dataChanged()
         
     def startReading(self):
-        if self.port is not None:
+        if self.port:
             # start reading values
-            threading.Thread(target=self.requestAlways).start()
+            if not self.readingStartet:
+                self.readingStartet = True
+                threading.Thread(target=self.requestAlways).start()
+            else:
+                logging.warn("already started {}".format(self.id))
         else:
             logging.warning("no port given")
             
@@ -102,7 +114,7 @@ class SerialBase():
         try:
             if self.port is not None:
                 if self.verbose:
-                    logging.info("connect to: {}".format(self.port))
+                    logging.info("connect to: {} {}".format(self.id, self.port))
                 self.serial = serial.Serial(self.port, self.baudrate, timeout=self.timeout)
             else:
                 logging.info("no port")
@@ -115,7 +127,7 @@ class SerialBase():
     def disconnect(self):
         try:
             if self.serial is not None:
-                logging.info("disconnect from: {}".format(self.serial))
+                logging.info("disconnect from: {} {}".format(self.id, self.serial))
                 self.serial.close()
         except:
             logging.error(sys.exc_info(), exc_info=True)
@@ -140,8 +152,10 @@ class SerialBase():
             if self.serial is not None:
                 
                 if self.verbose:
-                    logging.info("wait for data")
+                    logging.info("wait for data: {}".format(self.id))
                 lineRaw = self.serial.readline()
+                if self.verbose:
+                    logging.debug("raw: {} {}".format(self.id, lineRaw))
                 values = bytearray(lineRaw)
                 for x in range(len(values)):
                     if values[x] > 127:
@@ -152,11 +166,11 @@ class SerialBase():
                 self.parseData(line)
                 if self.callbackAfterData is not None:
                     if self.verbose:
-                        logging.info("callbackAfterData: " + str(line))
+                        logging.info("callbackAfterData: {} {}".format(self.id, str(line)))
                     self.callbackAfterData()
             else:
                 if self.verbose:
-                    logging.info("no serial")
+                    logging.info("no serial: {}".format(self.id))
                 time.sleep(self.updatetimeS)
         except:
             logging.error(sys.exc_info(), exc_info=True)
@@ -168,15 +182,16 @@ class SerialBase():
         if self.id is None:
             return None
         for p in self.ports:
-            # if self.verbose:
-            logging.info("try port: {}".format(p))
+            if self.verbose:
+                logging.info("try port: {} {}".format(self.id, p))
             s = None
             try:
                 s = serial.Serial(p, self.baudrate, timeout=2, inter_byte_timeout=2)
                 
                 # try to read 20 lines
                 for i in range(20):
-                    logging.info("try: {}".format(i))
+                    if self.verbose:
+                        logging.info("try: {} {}".format(self.id, i))
                     line = None
                     if True:
                         line = self.readline(s, 4)
@@ -191,18 +206,18 @@ class SerialBase():
                         # remove newline at end
                         line = line.rstrip()
                         if self.verbose:
-                            logging.debug("line: {} {}".format(p, line))
+                            logging.debug("line: {} {} {}".format(self.id, p, line))
                         if len(line) == 0:
-                            logging.info("empty line: {}".format(p))
+                            logging.info("empty line: {} {}".format(self.id, p))
                             break
                         if line == "ID: " + self.id:
-                            logging.info("found: {} {}".format(p, line))
+                            logging.info("found: {} {} {}".format(self.id, p, line))
                             return p
                         if line.startswith("ID: "):
                             logging.info("wrong ID: {}".format(self.id))
                             break;
                     else:
-                        logging.info("no line: {}".format(p))
+                        logging.info("no line: {} {}".format(self.id , p))
                         break
 
             except:
@@ -210,7 +225,7 @@ class SerialBase():
             finally:
                 try:
                     if s:
-                        logging.info("close: {}".format(p))
+                        logging.info("close: {} {}".format(self.id, p))
                         s.close()
                 except:
                     logging.error(sys.exc_info(), exc_info=False)   

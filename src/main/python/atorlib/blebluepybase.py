@@ -17,6 +17,7 @@ class BleBluepyBase(atorlib.BleBase):
     sleepBetweenRequests = 0.2
 
     def __init__(self,
+                 adapter: int=0,
                  mac=None,
                  name=None,
                  mtuSize=None,
@@ -25,7 +26,7 @@ class BleBluepyBase(atorlib.BleBase):
                  updatetimeS=1,
                  callbackAfterData=None,
                  disconnectAfterData=False):
-        super().__init__(mac=mac, name=name, mtuSize=mtuSize,
+        super().__init__(adapter=adapter, mac=mac, name=name, mtuSize=mtuSize,
                          data=data, verbose=verbose, updatetimeS=updatetimeS, callbackAfterData=callbackAfterData,
                          disconnectAfterData=disconnectAfterData,
                          useBleak=False);
@@ -46,8 +47,8 @@ class BleBluepyBase(atorlib.BleBase):
                 logging.info("wait for lock")
             with self.lock:
                 if self.peripheral is None:
-                    logging.info("connect to: {} ({})".format(self.mac, self.name))
-                    self.peripheral = bluepy.btle.Peripheral(deviceAddr=self.mac, iface=0)
+                    logging.info("connect to: {} {} ({})".format(self.adapter, self.mac, self.name))
+                    self.peripheral = bluepy.btle.Peripheral(deviceAddr=self.mac, iface=self.adapter)
                     if self.mtuSize is not None:
                         self.peripheral.setMTU(self.mtuSize)
                     self.peripheral.withDelegate(self)
@@ -56,9 +57,9 @@ class BleBluepyBase(atorlib.BleBase):
                 else:
                     logging.info("already connected")
         except:
+            logging.error(sys.exc_info())
             self.disconnect()
             self.checkAgeOfValues()
-            logging.error(sys.exc_info())
             # logging.error(sys.exc_info(), exc_info=True)
 
     def isConnected(self) -> bool:

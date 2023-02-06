@@ -19,8 +19,10 @@ class BluetoothScannerBleak():
     sensors = []
     sensorLabels = {}
     verbose = False
+    adapter: int = 0
  
-    def __init__(self, updatetime=60, verbose=False):
+    def __init__(self, adapter:int=0, updatetime=60, verbose=False):
+        self.adapter = adapter
         self.updatetime = updatetime
         self.verbose = verbose
         threading.Thread(target=self.update).start()
@@ -39,11 +41,11 @@ class BluetoothScannerBleak():
             try:
                 logging.info("create scanner")
                 if True:
-                    async with bleak.BleakScanner() as scanner:
+                    async with bleak.BleakScanner(adapter="hci{}".format(self.adapter)) as scanner:
                         scanner._bus.add_message_handler(self.parseMessage)
                         await asyncio.sleep(120.0)
                 else:
-                     scanner = bleak.BleakScanner()
+                     scanner = bleak.BleakScanner(adapter="hci{}".format(self.adapter))
                      scanner.register_detection_callback(self.detectionCallback)
                      await scanner.start()
                      await asyncio.sleep(120.0)
