@@ -15,4 +15,7 @@ Der Code kann einfach mit der Arduino-IDE geflasht werden. Als Board "ESP32 Dev 
 Ich habe eine kostenlose SIM von Netzclub verwendet.
 
 ## TODO
-Eigentlich wäre es Sinnvoll zuerst die GPS-Position zu ermitteln und dann die Internetverbindung aufzubauen. Wenn keine GPS-position gefunden wird, kann man damit Energie sparen. Aber das Beispiel war halt so.
+Eigentlich wäre es sinnvoll zuerst die GPS-Position zu ermitteln und dann die Internetverbindung aufzubauen. Wenn keine GPS-position gefunden wird, kann man damit Energie sparen. Aber das Beispiel war halt so.
+
+## Lizenz
+GNU Lesser General Public License (LGPL-3.0)
