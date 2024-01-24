@@ -106,7 +106,7 @@ class TPMSGui(tk.Canvas):
             if self.carImage is None and self.iconFilename:
                 try:
                     image = Image.open(self.iconFilename)
-                    image = image.resize((imgageWidth, imgageWidth), Image.ANTIALIAS)
+                    image = image.resize((imgageWidth, imgageWidth), Image.LANCZOS)
                     self.carImage = ImageTk.PhotoImage(image)
                 except:
                     logging.warning(sys.exc_info())   

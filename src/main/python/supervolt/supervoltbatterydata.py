@@ -38,7 +38,7 @@ import logging
 
 
 # read data from notification
-class SupervoltBatteryBleak(atorlib.BleBleakBase):
+class SupervoltBatteryData():
 
     cellV = None
     totalV = None
@@ -46,100 +46,31 @@ class SupervoltBatteryBleak(atorlib.BleBleakBase):
     workingState = None
     alarm = None
     chargingA = None;
-    dischargingA = None;
+    dischargingA = None
     loadA = None
     tempC = None
     completeAh = None
     remainingAh = None
     designedAh = None
+    verbose: bool = False
+    
+    updatetimeS: int = 10
+    lastUpdatetime: float = time.time()
+    maxtime: float = 70  # seconds
     
     def __init__(self,
-                 adapter: int=0,
-                 name=None,
-                 mac=None,
-                 data=None,
+                 updatetimeS=10,
                  verbose=False,
-                 updatetimeS=1,
-                 timeout=None,
-                 callbackAfterData=None,
-                 disconnectAfterData=False):
-        super().__init__(adapter=adapter, mac=mac, name=name, mtuSize=246,
-                         timeout=timeout,
-                         data=data, verbose=verbose, updatetimeS=updatetimeS, callbackAfterData=callbackAfterData,
-                         disconnectAfterData=disconnectAfterData)
+                 ):
         self.tempC = [None, None, None, None]
         self.cellV = [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None]
-        if data:
-            self.parseData(data)
+        self.updatetimeS = updatetimeS
+        self.maxtime = self.updatetimeS * 10
             
-    async def enableNotifications(self):
-        if False:
-            data = b"\x02\x00"
-            ret = await self.peripheral.writeCharacteristic(0x0004, data)
-            if self.verbose:
-                logging.info("0x0004: " + str(ret) + " " + str(data))
-        data = b"\x01\x00"
-        handle = 0x0015
-        handle = "6e400003-b5a3-f393-e0a9-e50e24dcca9e"
-        await self.device.start_notify(char_specifier=handle, callback=self.handleNotification)
-        # ret = await self.peripheral.writeCharacteristic(0x0016, data)
-        # if self.verbose:
-        #    logging.info("0x0016: " + str(ret) + " " + str(data))
-        if False:
-            data = b"\x02\x00"
-            ret = await self.peripheral.writeCharacteristic(0x0019, data)
-            if self.verbose:
-                logging.info("0x0019: " + str(ret) + " " + str(data))
-        if self.verbose:
-            logging.info("notifications enabled")
-        
     def setData(self, data):
         if data:
             self.parseData(data)
         
-    # send request to battery for Realtime-Data
-    async def requestRealtimeData(self):
-        data = bytes(":000250000E03~", "ascii")
-        handle = 0x0013
-        handle = 19
-        handle = "6e400002-b5a3-f393-e0a9-e50e24dcca9e"
-        # 0x0013 -> 19 -> 6e400002-b5a3-f393-e0a9-e50e24dcca9e
-        ret = await self.device.write_gatt_char(char_specifier=handle, data=data)
-        # ret = self.device.writeCharacteristic(0x0013, data)
-        if self.verbose:
-            logging.debug(":000250000E03~: " + str(ret) + " " + str(data))
-    
-    # send request to battery for Capacity-Data
-    async def requestCapacity(self):
-        data = bytes(":001031000E05~", "ascii")
-        handle = 0x0013
-        handle = 19
-        handle = "6e400002-b5a3-f393-e0a9-e50e24dcca9e"
-        # 0x0013 -> 19 -> 6e400002-b5a3-f393-e0a9-e50e24dcca9e
-        ret = await self.device.write_gatt_char(char_specifier=handle, data=data)
-        if self.verbose:
-            logging.debug(":001031000E05~: " + str(ret) + " " + str(data))
-            
-    async def requestData(self):
-        dis = self.disconnectAfterData
-        try:
-            await self.enableNotifications()
-            # disable, cause we will need two answers
-            self.disconnectAfterData = False
-            self.notificationReceived = False
-            await self.requestRealtimeData()
-            await self.waitForNotification(10.0)
-            
-            self.notificationReceived = False
-            self.disconnectAfterData = dis
-            await self.requestCapacity()
-            await self.waitForNotification(10.0)
-        except:
-            logging.error(sys.exc_info(), exc_info=True)
-            logging.info("disconnect after error")
-            await self.disconnect()
-        self.disconnectAfterData = dis
-
     # try to read values from data
     def parseData(self, data):
         if self.verbose:
@@ -420,73 +351,68 @@ class SupervoltBatteryBleak(atorlib.BleBleakBase):
             return append
         return text + " | " + append
     
-    def toJSON(self, prefix="battery"):
-        self.checkAgeOfValues()
-        json = ""
-        prefixText = ""
-        if prefix is not None:
-            prefixText = prefix + "_"
-        try:
-            if self.tempC:
-                if self.tempC[0] is not None:
-                    json += "\"" + prefixText + "temperature\": {}".format(self.tempC[0]) + ",\n"
-            if self.totalV is not None:
-                json += "\"" + prefixText + "voltage\": {}".format(self.totalV) + ",\n"
-            if self.cellV:
-                if self.cellV[0] is not None:
-                    json += "\"" + prefixText + "voltage_cell0\": {}".format(self.cellV[0]) + ",\n"
-                if self.cellV[1] is not None:
-                    json += "\"" + prefixText + "voltage_cell1\": {}".format(self.cellV[1]) + ",\n"
-                if self.cellV[2] is not None:
-                    json += "\"" + prefixText + "voltage_cell2\": {}".format(self.cellV[2]) + ",\n"
-                if self.cellV[3] is not None:
-                    json += "\"" + prefixText + "voltage_cell3\": {}".format(self.cellV[3]) + ",\n"
-            if self.soc is not None:
-                json += "\"" + prefixText + "soc\": {}".format(self.soc) + ",\n"
-            if self.chargingA is not None:
-                json += "\"" + prefixText + "chargingA\": {}".format(self.chargingA) + ",\n"
-            if self.dischargingA is not None:
-                json += "\"" + prefixText + "dischargingA\": {}".format(self.dischargingA) + ",\n"
-            if self.loadA is not None:
-                json += "\"" + prefixText + "loadA\": {}".format(self.loadA) + ",\n"
-            if self.alarm is not None:
-                json += "\"" + prefixText + "alarm\": {}".format(self.alarm) + ",\n"
-            if self.workingState is not None:
-                json += "\"" + prefixText + "workingState\": {}".format(self.workingState) + ",\n"
-                withoutUmlaute = self.getWorkingStateText().replace("Ü", "Ue").replace("ü", "ue")
-                json += "\"" + prefixText + "workingStateText\": \"{}\"".format(withoutUmlaute) + ",\n"
-                withoutUmlaute = self.getWorkingStateTextShort().replace("Ü", "Ue").replace("ü", "ue")
-                json += "\"" + prefixText + "workingStateTextShort\": \"{}\"".format(withoutUmlaute) + ",\n"
-            if self.completeAh is not None:
-                json += "\"" + prefixText + "completeAh\": {}".format(self.completeAh) + ",\n"
-            if self.remainingAh is not None:
-                json += "\"" + prefixText + "remainingAh\": {}".format(self.remainingAh) + ",\n"
-            if self.designedAh is not None:
-                json += "\"" + prefixText + "designedAh\": {}".format(self.designedAh) + ",\n"
+    def checkAgeOfValues(self) -> bool:
+        if (time.time() - self.lastUpdatetime) > self.maxtime:
+            # data is old
+            return False
+        #    if (time.time() - self.lastResettime) > self.maxtime:
+        #        # last time for reset is also too old, so it will be called every maxtime
+        #        self.lastResettime = time.time()
+        #        logging.debug("reset values after time {}/{}".format(self.maxtime, (time.time() - self.lastUpdatetime)))
+        #        self.resetValues()
+        #        self.dataChanged(False)
+        return True
+    
+    def toJSON(self, prefix: str="battery") -> str:
+        if self.checkAgeOfValues():
+            json = ""
+            prefixText = ""
+            if prefix is not None:
+                prefixText = prefix + "_"
+            try:
+                if self.tempC:
+                    if self.tempC[0] is not None:
+                        json += "\"" + prefixText + "temperature\": {}".format(self.tempC[0]) + ",\n"
+                if self.totalV is not None:
+                    json += "\"" + prefixText + "voltage\": {}".format(self.totalV) + ",\n"
+                if self.cellV:
+                    if self.cellV[0] is not None:
+                        json += "\"" + prefixText + "voltage_cell0\": {}".format(self.cellV[0]) + ",\n"
+                    if self.cellV[1] is not None:
+                        json += "\"" + prefixText + "voltage_cell1\": {}".format(self.cellV[1]) + ",\n"
+                    if self.cellV[2] is not None:
+                        json += "\"" + prefixText + "voltage_cell2\": {}".format(self.cellV[2]) + ",\n"
+                    if self.cellV[3] is not None:
+                        json += "\"" + prefixText + "voltage_cell3\": {}".format(self.cellV[3]) + ",\n"
+                if self.soc is not None:
+                    json += "\"" + prefixText + "soc\": {}".format(self.soc) + ",\n"
+                if self.chargingA is not None:
+                    json += "\"" + prefixText + "chargingA\": {}".format(self.chargingA) + ",\n"
+                if self.dischargingA is not None:
+                    json += "\"" + prefixText + "dischargingA\": {}".format(self.dischargingA) + ",\n"
+                if self.loadA is not None:
+                    json += "\"" + prefixText + "loadA\": {}".format(self.loadA) + ",\n"
+                if self.alarm is not None:
+                    json += "\"" + prefixText + "alarm\": {}".format(self.alarm) + ",\n"
+                if self.workingState is not None:
+                    json += "\"" + prefixText + "workingState\": {}".format(self.workingState) + ",\n"
+                    withoutUmlaute = self.getWorkingStateText().replace("Ü", "Ue").replace("ü", "ue")
+                    json += "\"" + prefixText + "workingStateText\": \"{}\"".format(withoutUmlaute) + ",\n"
+                    withoutUmlaute = self.getWorkingStateTextShort().replace("Ü", "Ue").replace("ü", "ue")
+                    json += "\"" + prefixText + "workingStateTextShort\": \"{}\"".format(withoutUmlaute) + ",\n"
+                if self.completeAh is not None:
+                    json += "\"" + prefixText + "completeAh\": {}".format(self.completeAh) + ",\n"
+                if self.remainingAh is not None:
+                    json += "\"" + prefixText + "remainingAh\": {}".format(self.remainingAh) + ",\n"
+                if self.designedAh is not None:
+                    json += "\"" + prefixText + "designedAh\": {}".format(self.designedAh) + ",\n"
 
-        except:
-            logging.warning(sys.exc_info(), exc_info=True)
-        return json
-
-
-def main():
-    try:
-        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s')
-        
-        mac = "84:28:D7:8F:XX:XX"
-        if len(sys.argv) > 1 and sys.argv[1] is not None:
-            mac = sys.argv[1]
+            except:
+                logging.warning(sys.exc_info(), exc_info=True)
+            return json
         else:
-            logging.warning("usage: supervoltbatterybleak.py <BLE-Address>")
-            return
-        logging.info("connect to " + mac)
-        battery = SupervoltBatteryBleak(mac=mac, name="SuperVoltTest", verbose=True, updatetimeS=10, disconnectAfterData=True)
-        battery.startReading()
-        while(True):
-            time.sleep(10000)
-    except:
-        logging.error(sys.exc_info(), exc_info=True)
-
-
-if __name__ == '__main__':
-    main()
+            # too old
+            return ""
+        
+    def getLastUpdateTime(self) -> float:
+        return self.lastUpdatetime

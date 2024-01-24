@@ -10,6 +10,7 @@ try:
     import bleak
     import threading
     import logging
+    import traceback
 except:
     print(sys.exc_info())
     
@@ -53,13 +54,13 @@ class BleBleakBase(atorlib.BleBase):
     # receive notifications
     async def handleNotification(self, sender, data):
         if self.verbose:
-            logging.info("notification: {} {}".format(data.hex(), sender))
+            logging.info("notification: {} {}".format(sender, data.hex()))
         if data is not None:
             self.data = data
             self.parseData(data)
             self.lastUpdatetime = time.time()
             try:
-                if self.callbackAfterData is not None:
+                if self.callbackAfterData:
                     if self.verbose:
                         logging.info("callbackAfterData")
                     self.callbackAfterData()
@@ -79,8 +80,15 @@ class BleBleakBase(atorlib.BleBase):
         if self.verbose:
             logging.debug("used: {}".format((time.time() - start)))
         return self.notificationReceived
-            
-    async def connect(self):
+           
+    def connect(self):
+        try:
+            asyncio.run(self.connectAwait())
+        except:
+            logging.error(traceback.format_exc())
+            logging.error(sys.exc_info(), exc_info=True)
+        
+    async def connectAwait(self):
         try:
             if self.verbose:
                 logging.info("wait for lock")
@@ -90,10 +98,14 @@ class BleBleakBase(atorlib.BleBase):
                     if True:
                         self.device = bleak.BleakClient(self.mac, timeout=self.timeout, adapter="hci{}".format(self.adapter))
                         if self.device:
-                            await self.device.connect()
-                            if self.verbose:
-                                logging.info("connected: {}".format(self.device.is_connected))
-                            if self.mtuSize is not None:
+                            try:
+                                await self.device.connect()
+                                if self.verbose:
+                                    logging.info("connected: {}".format(self.device.is_connected))
+                            except:
+                                logging.error(traceback.format_exc())
+                                logging.error(sys.exc_info(), exc_info=True)
+                            if False and self.mtuSize is not None:
                                 try:
                                     await self.device._acquire_mtu()
                                     logging.warning("bleak does not support MTU-Size: {}".format(self.device.mtu_size))
@@ -110,6 +122,8 @@ class BleBleakBase(atorlib.BleBase):
                 else:
                     logging.info("already connected")
         except:
+            logging.error(traceback.format_exc())
+            logging.error(sys.exc_info(), exc_info=True)
             await self.disconnect()
             self.checkAgeOfValues()
             logging.error(sys.exc_info())
@@ -134,14 +148,15 @@ class BleBleakBase(atorlib.BleBase):
             logging.info("requestOnce")
         try:
             if self.device is None:
-               await self.connect()
+               await self.connectAwait()
             if self.device is not None:
                 if self.verbose:
                     logging.info("requestData")
                 dataReceived = False
                 await self.requestData()
                 time.sleep(self.sleepBetweenRequests)
-                await self.disconnect()        
+                if self.disconnectAfterData:
+                    await self.disconnect()        
             else:
                 if self.verbose:
                     logging.info("no device")

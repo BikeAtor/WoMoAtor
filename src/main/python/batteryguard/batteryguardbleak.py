@@ -32,11 +32,12 @@ class BatteryGuardBleak(atorlib.BleBleakBase):
         # Characteristic <SC Control Point> uuid: 00002a55-0000-1000-8000-00805f9b34fb handle: 47 properties: NOTIFY
         # Characteristic <RSC Measurement> uuid: 00002a53-0000-1000-8000-00805f9b34fb handle: 37 properties: NOTIFY
         try:
+            logging.info("requestData")
             # every time notification is turned on we will get another value.so reset from time to time
             self.requestCounter += 1
             if self.requestCounter % 5 == 0:
-                self.disconnect()
-                self.connect()
+                await self.disconnect()
+                await self.connect()
             handle = 37
             handle = "00002a53-0000-1000-8000-00805f9b34fb"
             # enable notify
@@ -44,6 +45,8 @@ class BatteryGuardBleak(atorlib.BleBleakBase):
             await self.device.start_notify(char_specifier=handle, callback=self.handleNotification)
         except:
             logging.error(sys.exc_info(), exc_info=True)
+            logging.info("disconnect after error")
+            await self.disconnect()
     
     def floatValue(self, nums):
         # check if value is negative

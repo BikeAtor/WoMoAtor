@@ -115,7 +115,7 @@ class GuiIconValue(tk.Canvas):
                 # width, height = image.size
                 # if width > height:
                 #    iconSize *= height / width
-                image = image.resize((iconSize, iconSize), Image.ANTIALIAS)
+                image = image.resize((iconSize, iconSize), Image.LANCZOS)
                 self.iconImage = ImageTk.PhotoImage(image) 
                 iconImageId = self.create_image((factorx * x, 0), anchor=tk.NW, image=self.iconImage)
                 self.tag_bind(iconImageId, "<1>", self.iconImageClicked)
@@ -154,7 +154,7 @@ class GuiIconValue(tk.Canvas):
             # icon
             if self.iconImage is None:
                 image = Image.open(self.iconName)
-                image = image.resize((iconSize, iconSize), Image.ANTIALIAS)
+                image = image.resize((iconSize, iconSize), Image.LANCZOS)
                 self.iconImage = ImageTk.PhotoImage(image) 
                 iconImageId = self.create_image((0, factory * y), anchor=tk.NW, image=self.iconImage)
                 self.tag_bind(iconImageId, "<1>", self.iconImageClicked)

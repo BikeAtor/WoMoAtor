@@ -160,7 +160,7 @@ class GPSMap(tk.Frame):
                     del draw
 
                     # logging.info( "size: " + str(image.size) )
-                    image = image.resize((self.tilesize, self.tilesize))
+                    image = image.resize((self.tilesize, self.tilesize), Image.LANCZOS)
                     self.img = PIL.ImageTk.PhotoImage(image)
                     self.mapLabel['image'] = self.img
                     self.mapLabel.pack()

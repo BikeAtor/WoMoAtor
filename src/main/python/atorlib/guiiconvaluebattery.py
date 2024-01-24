@@ -102,7 +102,7 @@ class GuiIconValueBattery(atorlib.GuiIconValue):
                     logging.info("unkown batteryLevel {}".format(batteryLevel))
                 if iconName is not None:
                     image = Image.open(iconName)
-                    image = image.resize((iconSize, iconSize), Image.ANTIALIAS)
+                    image = image.resize((iconSize, iconSize), Image.LANCZOS)
                     self.batteryImage = ImageTk.PhotoImage(image) 
                     iconImageId = self.create_image((factorx * x, 0), anchor=tk.NW, image=self.batteryImage)
                     self.tag_bind(iconImageId, "<1>", self.iconImageClicked)
@@ -141,7 +141,7 @@ class GuiIconValueBattery(atorlib.GuiIconValue):
                     logging.info("unkown batterLevel {}".format(batteryLevel))
                 if iconName is not None:
                     image = Image.open(iconName)
-                    image = image.resize((iconSize, iconSize), Image.ANTIALIAS)
+                    image = image.resize((iconSize, iconSize), Image.LANCZOS)
                     self.batteryImage = ImageTk.PhotoImage(image) 
                     iconImageId = self.create_image((0, factory * y), anchor=tk.NW, image=self.batteryImage)
             else:

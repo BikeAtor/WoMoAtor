@@ -22,7 +22,6 @@ class Sensor(sensor.Sensor):
     humidity: float = None
     battery: float = None
     callbackAfterData = None
-    verbose: bool = False
     jsonPrefix: string = None
     
     def __init__(self, name=None, address=None,
@@ -39,6 +38,9 @@ class Sensor(sensor.Sensor):
     def parseData(self, data):
         return False
     
+    def parseServiceData(self, data):
+        return False
+    
     def setId(self, id: string):
         self.id = id
         
@@ -51,10 +53,6 @@ class Sensor(sensor.Sensor):
     def setJsonPrefix(self, prefix: string):
         self.jsonPrefix = prefix
         
-    def setVerbose(self, verbose: string):
-        if verbose:
-            self.verbose = prefix.upper() == "TRUE"
-            
     def getBatteryLevel(self) -> float:
         return self.battery;
     
@@ -85,7 +83,7 @@ class Sensor(sensor.Sensor):
                 json += "\"" + prefixText + "battery\": {}".format(self.battery) + ",\n"
 
         except:
-            logging.warning(sys.exc_info(), exc_info=True)
+            logging.error(sys.exc_info(), exc_info=True)
         return json
     
     def twosComplement(self, n: int, w: int=16) -> float:
@@ -104,6 +102,11 @@ class Sensor(sensor.Sensor):
     
     def floatValue100(self, nums):
         return self.floatValue(nums) / 100.0
+    
+    def setVerbose(self, value: str):
+        if value:
+            self.verbose = ("TRUE" == value.upper())
+        logging.info("verbose: {}".format(self.verbose))
 
     
 class SensorGovee(Sensor):
@@ -134,7 +137,7 @@ class SensorGovee(Sensor):
                 if self.verbose:
                     logging.info("govee wrong length: {} {}".format(len(data), data.hex()))
         except:
-            logging.warning(sys.exc_info(), exc_info=True)
+            logging.error(sys.exc_info(), exc_info=True)
         return False
 
     
@@ -147,14 +150,16 @@ class SensorInkbird(Sensor):
         
     def parseData(self, data):
         try:
-            if len(data) >= 7:
+            if len(data) >= 8:
                 # temp = self.floatValue100(advertisement.mfg_data[0:2])
                 temp = float(int.from_bytes(data[0:2], byteorder='little', signed=True) / 100.0)
                 hum = self.floatValue100(data[2:4])
-                # bat = self.floatValue100(data[4:6])
+                # internal = data[4]
+                # modbus = self.floatValue100(data[5:7])
                 bat = data[7]
                 if self.verbose:
                     logging.info("inkbird {} {:.1f}° {:.0f}% {} {}".format(self.name, temp, hum, bat, data.hex()))
+                # logging.info("inkbird {} {:.1f}° {:.0f}% {} {}".format(self.name, temp, hum, bat, data.hex()))
                 self.temperature = float(temp)
                 self.humidity = float(hum)
                 self.battery = float(bat)
@@ -163,8 +168,9 @@ class SensorInkbird(Sensor):
             else:
                 if self.verbose:
                     logging.info("inkbird wrong length: {} {}".format(len(data), data.hex()))
+                logging.info("inkbird wrong length: {} {}".format(len(data), data.hex()))
         except:
-            logging.warning(sys.exc_info(), exc_info=True)
+            logging.error(sys.exc_info(), exc_info=True)
         return False
 
     
@@ -185,9 +191,9 @@ class SensorBrifit(Sensor):
                                                                           hum / 16.0,
                                                                           batt / 16.0 * 100,
                                                                           data.hex()))
-                self.temperature = float(temp / 16.0)
-                self.humidity = float(hum / 16.0)
-                self.battery = float(batt / 16.0 * 100)
+                # self.temperature = float(temp / 16.0)
+                # self.humidity = float(hum / 16.0)
+                # self.battery = float(batt / 16.0 * 100)
                 # self.battery = float(data[11] / 16.0 * 10)
                 return True
             elif len(data) == 18:  # bleak
@@ -208,7 +214,7 @@ class SensorBrifit(Sensor):
                 if self.verbose:
                     logging.info("brifit wrong length: {} {}".format(len(data), data.hex()))
         except:
-            logging.warning(sys.exc_info(), exc_info=True)
+            logging.error(sys.exc_info(), exc_info=True)
         return False
 
 
@@ -222,25 +228,82 @@ class SensorAzarton(Sensor):
     def parseData(self, data):
         try:
             if self.verbose:
-                logging.info("brifit data: {} {}".format(len(data), data.hex()))
+                logging.info("azarton data: {} {}".format(len(data), data.hex()))
             if len(data) >= 2:
                 value = self.floatValue(data[0:2])
                 if self.verbose:
-                    logging.debug("temp: {}" .format(value))
+                    logging.info("temp: {}" .format(value))
                 self.temperature = value / 100.0
                     
             if len(data) >= 3:
                 value = int(data[2])
                 if self.verbose:
-                    logging.debug("hum: {}" .format(value))
+                    logging.info("hum: {}" .format(value))
                 self.humidity = value
                     
             if len(data) >= 4:
                 value = int(data[3])
                 if self.verbose:
-                    logging.debug("bat: {}" .format(value))
+                    logging.info("bat: {}" .format(value))
                 self.battery = value
             return True
         except:
+            logging.warning(sys.exc_info(), exc_info=True)
+        return False
+
+    
+class SensorSwitchbot(Sensor):
+    
+    def __init__(self, name=None, address=None, callbackAfterData=None, verbose=False):
+        super().__init__(name=name, address=address, callbackAfterData=callbackAfterData,
+                         verbose=verbose,
+                         type=ble_temperature_sensor.SensorType.SWITCHBOT)
+        
+    def parseData(self, data):
+        try:
+            if self.verbose:
+                logging.info("switchbot data: {} {} {}".format(self.address, len(data), data.hex()))
+            if len(data) > 11:
+                # 6909 fb171f5b47e9 5907 0295 15 00
+                # 6909 fb171f5b47e9 b407 0681 19 00
+                # 6909 fb171f5b47e9 d007 0803 1a 00
+                # 6909 fb171f5b47e9 ed0f 0308 26 00
+                # 0:1 Manufacturer
+                # 2:7 MAC
+                # 10:11 Temp
+                # 12 Hum
+                # 13 Error 00=OK
+                # see https://github.com/custom-components/ble_monitor/issues/1204
+                # tempc = ((byte10 & 0x0F) * 0.1 + (byte11 & 0x7F)) * (1 if ((byte11 & 0x80) > 0) else -1)
+                value = ((data[10] & 0x0F) * 0.1 + (data[11] & 0x7F)) * (1 if ((data[11] & 0x80) > 0) else -1)
+                if self.verbose:
+                    logging.info("switchbot temp: {}".format(value))
+                self.temperature = value
+            else:
+                logging.debug("switchbot too short")
+            
+            if len(data) > 12:
+                value = int(data[12])
+                if self.verbose:
+                    logging.info("switchbot hum: {}".format(value))
+                self.humidity = value
+            return True
+        except:
+            logging.warning("switchbot error")
+            logging.warning(sys.exc_info(), exc_info=True)
+        return False
+    
+    def parseServiceData(self, data):
+        try:
+            if self.verbose:
+                logging.info("switchbot service_data: {} {} {}".format(self.address, len(data), data.hex()))
+            if len(data) >= 5:
+                value = data[4]
+                if self.verbose:
+                    logging.info("switchbot bat: {}".format(value))
+                self.battery = value
+            return True
+        except:
+            logging.warning("switchbot error")
             logging.warning(sys.exc_info(), exc_info=True)
         return False

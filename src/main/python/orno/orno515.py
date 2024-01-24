@@ -25,6 +25,8 @@ class Orno515Serial():
     
     callbackAfterData = None
     
+    updatetimeS: int = 10
+    
     instrument: minimalmodbus.Instrument = None
     
     readingStarted: bool = False

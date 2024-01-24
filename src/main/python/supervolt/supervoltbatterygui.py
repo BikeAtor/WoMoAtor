@@ -11,19 +11,22 @@ if dllpath not in os.environ:
 import logging
 import threading
 import time
+import matplotlib
+import struct
 
 import json
 
+from supervolt.supervoltbatterydata import SupervoltBatteryData
 # import supervolt.supervoltbattery
 try:
     from supervolt import supervoltbatterybluepy
 except:
-    logging.warning("no bluepy")
+    logging.warning("no SupervoltBatteryBluepy")
     pass
 try:
     from supervolt import supervoltbatterybleak
 except:
-    logging.warning("no bleak")
+    logging.warning("no SupervoltBatteryBluepyBleak")
     pass
 # GUI
 import tkinter as tk
@@ -61,6 +64,7 @@ class SupervoltBatteryGUI(tk.Canvas):
     updatetimeS = 60
     useBleak = False
     timeout: float = None
+    watchdog_timeout: int = 15 * 60;
 
     def __init__(self, master=None,
                 adapter: int=0,
@@ -100,6 +104,7 @@ class SupervoltBatteryGUI(tk.Canvas):
             self.orientation = orientation
             self.size = size
             self.verbose = verbose
+            self.useBleak = useBleak
             if fg is not None:
                 self.fg = fg
             if bg is not None:
@@ -169,7 +174,7 @@ class SupervoltBatteryGUI(tk.Canvas):
             # battery
             if self.batteryImage is None:
                 image = Image.open(self.iconBattery)
-                image = image.resize((iconSize, iconSize), Image.ANTIALIAS)
+                image = image.resize((iconSize, iconSize), Image.LANCZOS)
                 self.batteryImage = ImageTk.PhotoImage(image) 
                 batteryImageId = self.create_image((factorx * x, 0), anchor=tk.NW, image=self.batteryImage)
                 self.tag_bind(batteryImageId, "<1>", self.batteryImageClicked)
@@ -184,13 +189,18 @@ class SupervoltBatteryGUI(tk.Canvas):
                                                         text=text)
             else:
                 self.itemconfigure(self.batteryTextId, text=text)
+                try:
+                    timediff = time.time() - self.getData().lastUpdatetime
+                    logging.debug("hor timediff: {}".format(timediff))
+                except:
+                    logging.error(sys.exc_info(), exc_info=True)
             # width = self.font.measure(text)
             
             x += 1
             # load
             if self.loadImage is None:
                 image = Image.open(self.iconLoad)
-                image = image.resize((iconSize, iconSize), Image.ANTIALIAS)
+                image = image.resize((iconSize, iconSize), Image.LANCZOS)
                 self.loadImage = ImageTk.PhotoImage(image) 
                 self.create_image((factorx * x, 0), anchor=tk.NW, image=self.loadImage)
             
@@ -234,7 +244,7 @@ class SupervoltBatteryGUI(tk.Canvas):
             # battery
             if self.batteryImage is None:
                 image = Image.open(self.iconBattery)
-                image = image.resize((iconSize, iconSize), Image.ANTIALIAS)
+                image = image.resize((iconSize, iconSize), Image.LANCZOS)
                 self.batteryImage = ImageTk.PhotoImage(image) 
                 batteryImageId = self.create_image((0, factory * y), anchor=tk.NW, image=self.batteryImage)
                 self.tag_bind(batteryImageId, "<1>", self.batteryImageClicked)
@@ -248,6 +258,30 @@ class SupervoltBatteryGUI(tk.Canvas):
                                                       text=text)
             else:
                 self.itemconfigure(self.batteryTextId, text=text)
+                try:
+                    timediff = time.time() - self.getData().lastUpdatetime
+                    # timediff = 150.0
+                    logging.debug("ver timediff: {}".format(timediff))
+                    # color = self.batteryTextId.cget("fill")
+                    color = self.itemcget(self.batteryTextId, 'fill')
+                    logging.debug("color set: {} {}".format(color, matplotlib.colors.to_hex(color)))
+                    matplotlib.colors.to_hex
+                    color = self.fg
+                    hex = matplotlib.colors.to_hex(self.fg)
+                    tup = tuple(int(hex[i:i + 2], 16) for i in (1, 3, 5))
+                    logging.debug("color default: {} {}".format(color, tup))
+                    li = list(tup)
+                    li[0] += int(timediff)
+                    if li[0] > 255:
+                        li[0] = 255
+                    tup = tuple(li)
+                    colnew = '#%02x%02x%02x' % tup
+                    logging.debug("color default2: {} {}".format(color, colnew))
+                    self.itemconfigure(self.batteryTextId, fill=colnew)
+                    # matplotlib.colors.
+                    # self.batteryTextId
+                except:
+                    logging.error(sys.exc_info(), exc_info=True)
             # width = self.font.measure(text)
             
             text = ""
@@ -274,7 +308,7 @@ class SupervoltBatteryGUI(tk.Canvas):
             # load
             if self.loadImage is None:
                 image = Image.open(self.iconLoad)
-                image = image.resize((iconSize, iconSize), Image.ANTIALIAS)
+                image = image.resize((iconSize, iconSize), Image.LANCZOS)
                 self.loadImage = ImageTk.PhotoImage(image) 
                 self.create_image((0, factory * y), anchor=tk.NW, image=self.loadImage)
             
@@ -294,26 +328,26 @@ class SupervoltBatteryGUI(tk.Canvas):
     def getBatteryText(self):
         text = "--"
         try:
-            if self.battery is not None:
+            if self.getData() is not None:
                 text = ""
-                voltage = self.battery.totalV
+                voltage = self.getData().totalV
                 if voltage is None:
                     text += "- V\n"
                 else:
                     text += "{:.2f} V\n".format(voltage)
                 if self.showTemperature:
-                    temp = self.battery.tempC[0]
+                    temp = self.getData().tempC[0]
                     if temp is None:
                         text += "-°C\n"
                     else:
                         text += "{:.0f}°C\n".format(temp)
-                soc = self.battery.soc
+                soc = self.getData().soc
                 if soc is None:
                     text += "- %\n"
                 else:
                     text += "{:.0f} %\n".format(soc)
                 if self.showWorkingState:
-                    text += self.battery.getWorkingStateTextShort().replace(" ", "\n");
+                    text += self.getData().getWorkingStateTextShort().replace(" ", "\n");
         except:
             logging.error(sys.exc_info(), exc_info=True)
             text = "error"
@@ -322,19 +356,19 @@ class SupervoltBatteryGUI(tk.Canvas):
     def getBatteryCellText(self):
         textCell = ""
         try:
-            if self.battery is not None:
+            if self.getData() is not None:
                 j = 0
                 for i in range(0, 11):
-                    if self.battery.cellV[i] is not None and self.battery.cellV[i] > 0:
+                    if self.getData().cellV[i] is not None and self.getData().cellV[i] > 0:
                         if self.verbose:
-                            logging.info("Cell {}: {}V".format(i, self.battery.cellV[i]))
+                            logging.info("Cell {}: {}V".format(i, self.getData().cellV[i]))
                         j += 1
                         if len(textCell) > 0:
                             if j % 2 == 1:
                                 textCell += "\n"
                             else:
                                 textCell += " "
-                        textCell += "{:.2f}V".format(self.battery.cellV[i])
+                        textCell += "{:.2f}V".format(self.getData().cellV[i])
         except:
             logging.error(sys.exc_info(), exc_info=True)
             textCell = "error"       
@@ -343,9 +377,9 @@ class SupervoltBatteryGUI(tk.Canvas):
     def getBatteryCapacityText(self):
         textCapacity = ""
         try:
-            if self.battery is not None:
-                if self.battery.completeAh is not None and self.battery.remainingAh is not None:
-                    textCapacity += "{:.0f}/{:.0f}Ah".format(self.battery.remainingAh, self.battery.completeAh)
+            if self.getData() is not None:
+                if self.getData().completeAh is not None and self.getData().remainingAh is not None:
+                    textCapacity += "{:.0f}/{:.0f}Ah".format(self.getData().remainingAh, self.getData().completeAh)
         except:
             logging.error(sys.exc_info(), exc_info=True)
             textCapacity = "error"         
@@ -354,17 +388,28 @@ class SupervoltBatteryGUI(tk.Canvas):
     def getLoadText(self):
         text = "--"
         try:
-            if self.battery is not None:
+            if self.getData() is not None:
                 text = "- A\n- W"
-                if self.battery.loadA is not None and self.battery.totalV is not None:
-                    text = "{:.1f} A\n{:.1f} W".format(self.battery.loadA, (self.battery.loadA * self.battery.totalV))
+                if self.getData().loadA is not None and self.getData().totalV is not None:
+                    text = "{:.1f} A\n{:.1f} W".format(self.getData().loadA, (self.getData().loadA * self.getData().totalV))
         except:
             logging.error(sys.exc_info(), exc_info=True)
             text = "error"  
         return text
-        
+    
+    def getWatchdogTimeoutSeconds(self):
+        return self.watchdog_timeout
+    
     def getBattery(self):
         return self.battery
+    
+    def getData(self) -> SupervoltBatteryData:
+        bat = self.getBattery()
+        if not bat:
+            return None
+        # if self.useBleak:
+        #    return bat.getData()
+        return bat
     
     def initUIText(self):
         try:
@@ -437,6 +482,8 @@ class SupervoltBatteryGUI(tk.Canvas):
                 self.verbose = json["verbose"].upper() == "TRUE"
             if json.get("mac"):
                 self.mac = json["mac"]
+            if json.get("watchdog_timeout"):
+                self.watchdog_timeout = json["watchdog_timeout"]
             if json.get("iconBattery"):
                 self.iconBattery = json["iconBattery"]
             if json.get("iconLoad"):
@@ -459,6 +506,13 @@ class SupervoltBatteryGUI(tk.Canvas):
                 logging.info("fromJSON: end")
         except:
             logging.error(sys.exc_info(), exc_info=True)
+            
+    def setVerbose(self, value: str):
+        if value:
+            self.verbose = ("TRUE" == value.upper())
+            if self.battery:
+                self.battery.setVerbose(self.verbose)
+        logging.info("verbose: {}".format(self.verbose))
         
 
 def onClosingSupervolt():

@@ -50,7 +50,7 @@ class BleBase():
             self.name = "noname"
         self.mtuSize = mtuSize
         self.updatetimeS = updatetimeS
-        self.maxtime = self.updatetimeS * 5
+        self.maxtime = self.updatetimeS * 10
         self.callbackAfterData = callbackAfterData
         self.disconnectAfterData = disconnectAfterData
         self.useBleak = useBleak
@@ -177,3 +177,8 @@ class BleBase():
         
     def toJSON(self, prefix=None):
         return ""
+    
+    def setVerbose(self, value: str):
+        if value:
+            self.verbose = ("TRUE" == value.upper())
+        logging.info("verbose: {}".format(self.verbose))

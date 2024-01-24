@@ -10,3 +10,4 @@ class SensorType(Enum):
     BRIFIT = 3
     AZARTON = 4
     MI = 5
+    SWITCHBOT = 6

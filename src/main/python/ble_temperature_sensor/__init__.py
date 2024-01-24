@@ -6,6 +6,7 @@ from .sensor import SensorAzarton
 from .sensor import SensorBrifit
 from .sensor import SensorGovee
 from .sensor import SensorInkbird
+from .sensor import SensorSwitchbot
 
 try:
     from .sensorgui import SensorGUI
@@ -41,13 +42,13 @@ except:
 #    pass
 try:
     from .blescannerbluepy import BluetoothScannerBluepy
+except:
     logging.warning("no BluetoothScannerBluepy")
     logging.warning(sys.exc_info())
-except:
     pass
 try:
     from .blescannerbleak import BluetoothScannerBleak
+except:
     logging.warning("no BluetoothScannerBleak")
     logging.warning(sys.exc_info())
-except:
     pass

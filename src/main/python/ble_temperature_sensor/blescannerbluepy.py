@@ -47,8 +47,8 @@ class BluetoothScannerBluepy():
             try:
                 adapter = get_provider().get_adapter(adapter_id=self.adapter)
 
-                observer = Observer(adapter)
-                observer.on_advertising_data = self.onData
+                observer = Observer(adapter, self.onData)
+                # observer.on_advertising_data = self.onData
                 logging.info("observer created. adapter: {}".format(self.adapter))
                 
                 while True:
@@ -71,9 +71,26 @@ class BluetoothScannerBluepy():
 
     def onData(self, advertisement):
         try:
-            if advertisement.mfg_data is not None:
+            if advertisement.service_data:
                 if self.verbose:
-                    logging.info("data from {}: {}".format(advertisement.address.address.lower(), advertisement.mfg_data.hex()))
+                    logging.info("service_data from {}: {}".format(advertisement.address.address.lower(), advertisement.service_data.hex()))
+                found = False
+                for sensor in self.sensors:
+                    if advertisement.address.address.lower() == sensor.address.lower():
+                        parsed = sensor.parseServiceData(advertisement.service_data)
+                        if parsed and sensor.callbackAfterData is not None:
+                            sensor.callbackAfterData()
+                        found = True
+                if not found:
+                    if self.verbose:
+                        if advertisement.mfg_data:
+                            logging.info("wrong mac: {} {} {}".format(advertisement.address.address, len(advertisement.mfg_data), advertisement.mfg_data.hex()))
+                        else:
+                            logging.info("wrong mac: {}".format(advertisement.address.address))
+
+            if advertisement.mfg_data:
+                if self.verbose:
+                    logging.info("mfg_data from {}: {}".format(advertisement.address.address.lower(), advertisement.mfg_data.hex()))
                 found = False
                 for sensor in self.sensors:
                     if advertisement.address.address.lower() == sensor.address.lower():

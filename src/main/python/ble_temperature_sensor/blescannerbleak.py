@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+from turtle import __stringBody
 sys.path.append('..')
 
 import ble_temperature_sensor
@@ -40,21 +41,37 @@ class BluetoothScannerBleak():
         while True:
             try:
                 logging.info("create scanner")
-                if True:
+                if False:
                     async with bleak.BleakScanner(adapter="hci{}".format(self.adapter)) as scanner:
                         scanner._bus.add_message_handler(self.parseMessage)
                         await asyncio.sleep(120.0)
                 else:
-                     scanner = bleak.BleakScanner(adapter="hci{}".format(self.adapter))
-                     scanner.register_detection_callback(self.detectionCallback)
-                     await scanner.start()
-                     await asyncio.sleep(120.0)
-                     await scanner.stop()
+                    scanner = bleak.BleakScanner(adapter="hci{}".format(self.adapter))
+                    try:
+                        scanner.detection_callback(self.detectionCallback)
+                    except:
+                        # will be removed in bleak
+                        scanner.register_detection_callback(self.detectionCallback)
+                    if self.verbose:
+                        logging.info("start scanner")
+                    await scanner.start()
+                    await asyncio.sleep(100.0)
+                    if self.verbose:
+                        logging.info("stop scanner")
+                    await scanner.stop()
             except:
                 logging.error(sys.exc_info(), exc_info=True)
+            await asyncio.sleep(100.0)
                 
     def detectionCallback(self, device, advertisement_data):
         logging.info("address: {} RSSI: {} addata: {} svdata: {}".format(device.address, device.rssi, advertisement_data, advertisement_data.service_data))
+        if advertisement_data:
+            logging.info("advertisement_data {}".format(advertisement_data))
+            if advertisement_data.manufacturer_data:
+                logging.info("manufacturer_data {}".format(advertisement_data.manufacturer_data))
+                self.parseManufacturerdata(device.address, advertisement_data.manufacturer_data)
+        else:
+            logging.info("no advertisement_data")
     
     def parseMessage(self, message):
             # logging.info("message: {}".format(message))
@@ -67,41 +84,51 @@ class BluetoothScannerBleak():
                     # logging.info("message-mac: {}".format(mac))
                     logging.info("message body: {} {} {}".format(mac, message.member, message.body))
                     if "PropertiesChanged" == message.member:
-                        body = message.body;
-                        if body:
-                            # logging.info("body: {}".format(type(body)))
-                            if type(body) == list:
-                                for i in body:
-                                    # logging.info("body i: {}".format(type(i)))
-                                    if type(i) == dict:
-                                        # logging.info("body i: {}".format(i.keys()))
-                                        # logging.info("body i: {}".format(i))
-                                        # logging.info("body md: {}".format(i.get("ManufacturerData")))
-                                        md = i.get("ManufacturerData")
-                                        # md = i["ManufacturerData"]
-                                        if md:
-                                            # logging.info("md: {}".format(md))
-                                            # logging.info("md: {}".format(type(md)))
-                                            if md.value:
-                                                # logging.info("value: {}".format(type(md.value)))
-                                                if type(md.value) == dict: 
-                                                    v = md.value.popitem()
-                                                    logging.info("value: {}".format(v))
-                                                    # logging.info("value: {}".format(type(v)))
-                                                    if len(v) == 2:
-                                                        key = v[0]
-                                                        # logging.info("key: {} {}".format(mac, v[0]))
-                                                        v = v[1].value
-                                                        # logging.info("value: {}".format(v))
-                                                        # logging.info("value: {}".format(type(v)))
-                                                        if type(v) == bytes:
-                                                            # logging.info("value: {} {} {}".format(len(v), type(v), v.hex()))
-                                                            prefix = key.to_bytes(2, byteorder='little')
-                                                            logging.info("prefix: {} {} {}".format(mac, key, prefix))
-                                                            self.onData(mac, prefix + v)
-                                                            return
+                        self.parseBody(mac, message.body)
                     logging.info("unknown message body: {} {} {}".format(mac, message.member, message.body))
-                    
+
+    def parseBody(self, mac, body):
+        if body:
+            logging.info("body: {}".format(type(body)))
+            if type(body) == list:
+                for i in body:
+                    # logging.info("body i: {}".format(type(i)))
+                    if type(i) == dict:
+                        # logging.info("body i: {}".format(i.keys()))
+                        # logging.info("body i: {}".format(i))
+                        # logging.info("body md: {}".format(i.get("ManufacturerData")))
+                        md = i.get("ManufacturerData")
+                        # md = i["ManufacturerData"]
+                        if md:
+                            # logging.info("md: {}".format(md))
+                            # logging.info("md: {}".format(type(md)))
+                            if md.value:
+                                # logging.info("value: {}".format(type(md.value)))
+                                if type(md.value) == dict: 
+                                    self.parseManufacturerdata(mac, md.value)
+                            
+    def parseManufacturerdata(self, mac, md):
+        v = md.popitem()
+        logging.info("value: {}".format(v))
+        # logging.info("value: {}".format(type(v)))
+        if len(v) == 2:
+            key = v[0]
+            # logging.info("key: {} {}".format(mac, v[0]))
+            logging.info("type: {}".format(type(v[1])))
+            if type(v[1]) == bytes:
+                self.onData(mac, v[1])
+                return
+            else:
+                b = v[1].value
+            # logging.info("value: {}".format(v))
+            # logging.info("value: {}".format(type(v)))
+            if type(b) == bytes:
+                # logging.info("value: {} {} {}".format(len(v), type(v), v.hex()))
+                prefix = key.to_bytes(2, byteorder='little')
+                logging.info("prefix: {} {} {}".format(mac, key, prefix))
+                self.onData(mac, prefix + v)
+                return
+                                                                            
     def update(self):
         asyncio.run(self.updateBleak())
 

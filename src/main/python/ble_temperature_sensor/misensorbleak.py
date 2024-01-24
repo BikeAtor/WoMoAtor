@@ -80,12 +80,13 @@ class MiSensorBleak(atorlib.BleBleakBase):
 
     # try to read values from data
     def parseData(self, data):
-        if self.verbose:
-            logging.info("parseData: " + str(data))
         try:
+            logging.info("parseData: {} {}".format(self.mac, str(data)))
+            if self.verbose:
+                logging.info("parseData: {} {}".format(self.mac, str(data)))
             if data is not None:
                 if self.verbose:
-                    logging.debug("length: " + str(len(data)))
+                    logging.info("length: " + str(len(data)))
                 
                 found = False
                 if len(data) >= 6:

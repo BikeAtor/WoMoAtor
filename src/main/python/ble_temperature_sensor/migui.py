@@ -55,7 +55,7 @@ class MiGUI(atorlib.GuiIconValueBattery):
         if valueNewline is not None:
             self.valueNewline = valueNewline
         try:
-            logging.debug("before sensor")
+            logging.debug("before sensor: bleak: {}".format(useBleak))
             if useBleak:
                 self.misensor = ble_temperature_sensor.MiSensorBleak(
                                             adapter=adapter,
