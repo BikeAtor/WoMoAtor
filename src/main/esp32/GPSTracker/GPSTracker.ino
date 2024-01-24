@@ -1,5 +1,5 @@
 /**
-   GPSTracker
+   GPSTracker by BikeAtor (WoMoAtor)
 
    Original Code: https://github.com/vshymanskyy/TinyGSM/tree/master/examples/AllFunctions
 
