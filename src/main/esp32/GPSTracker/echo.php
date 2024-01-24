@@ -1,5 +1,5 @@
 <?php
-
+# example reading the values from GPSTracker. you can deploy it e.g. in Apache
 function saveValues($mysqli)
 {
     $date2 = new DateTimeImmutable();
