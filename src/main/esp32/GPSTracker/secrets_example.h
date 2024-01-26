@@ -1,3 +1,7 @@
+// Time ESP32 will go to sleep (in seconds)
+#define TIME_TO_SLEEP 300
+
+// ##### GSM #####
 // set GSM PIN, if any
 #define GSM_PIN             "1234"
 // Your GPRS credentials, if any
@@ -6,6 +10,7 @@
 #define GPRS_USER ""
 #define GPRS_PASS ""
 
+// ##### HTTP-Server for GPS-data #####
 // server for HTTP-Requests
 #define GPS_DATA_SERVER "MYSERVER";
 // normally HTTP = 80, HTTPS = 443
@@ -18,5 +23,6 @@
 // tmp=temperature (°C?)
 #define GPS_DATA_PATH "/echo.php"
 
+// ##### Debugging #####
 // See all AT commands, if wanted
 // #define DUMP_AT_COMMANDS

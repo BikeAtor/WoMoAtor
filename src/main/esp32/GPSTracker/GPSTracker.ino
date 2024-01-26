@@ -1,14 +1,16 @@
 /**
-   GPSTracker by BikeAtor (WoMoAtor) Version 2.0
+   GPSTracker by BikeAtor (WoMoAtor) Version 2.1
 
    Original Code: https://github.com/vshymanskyy/TinyGSM/tree/master/examples/AllFunctions
 
    This project is released under The GNU Lesser General Public License (LGPL-3.0)
 
-   Version 2.0
+   Version 2.1:
+   - config sleeptime
+   Version 2.0:
    - Open GPRS afer getting position
    - Use ArduinoHttpClient for connection to webserver
-   Version 1.0
+   Version 1.0:
    - Working
 */
 /**************************************************************
@@ -56,7 +58,6 @@ const char gprsPass[] = GPRS_PASS;
 
 
 #define uS_TO_S_FACTOR 1000000ULL /* Conversion factor for micro seconds to seconds */
-#define TIME_TO_SLEEP 300         /* Time ESP32 will go to sleep (in seconds) */
 
 #define UART_BAUD 115200
 
